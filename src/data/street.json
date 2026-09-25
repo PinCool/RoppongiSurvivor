@@ -1,0 +1,60 @@
+{
+  "duration_seconds": 180,
+  "goal_appear_seconds": 120,
+  "goal_distance": 900,
+  "goal_radius": 70,
+  "customer_spawn_seconds": [
+    60,
+    90,
+    120
+  ],
+  "customer_spawn_distance": 560,
+  "customer_talk_radius": 70,
+  "customer_wander_speed": 40,
+  "customer_skip_cooldown_seconds": 4,
+  "max_companions": 3,
+  "world_half_size": 2400,
+  "player": {
+    "move_speed": 240,
+    "radius": 22,
+    "magnet_radius": 120,
+    "pickup_radius": 30,
+    "invincible_seconds": 0.7
+  },
+  "weapon": {
+    "cooldown_seconds": 0.75,
+    "damage": 10,
+    "projectile_speed": 640,
+    "projectile_radius": 12,
+    "range": 480,
+    "projectile_life_seconds": 0.9
+  },
+  "street_level": {
+    "exp_thresholds": [
+      5,
+      12,
+      22,
+      36,
+      55,
+      80,
+      110,
+      150
+    ],
+    "damage_per_level": 3,
+    "cooldown_multiplier_per_level": 0.9,
+    "extra_projectile_every_levels": 3
+  },
+  "spawn": {
+    "start_interval_seconds": 1.0,
+    "min_interval_seconds": 0.22,
+    "interval_decay_per_minute": 0.3,
+    "distance_min": 520,
+    "distance_max": 720,
+    "max_alive": 90
+  },
+  "stage_scaling": {
+    "enemy_hp_per_stage": 0.12,
+    "spawn_rate_per_stage": 0.04
+  },
+  "gem_magnet_speed": 700
+}

@@ -1,0 +1,4 @@
+{
+  "exp": { "mp_cost": 5, "street_exp": 8 },
+  "heal": { "mp_cost": 5, "hp": 35 }
+}

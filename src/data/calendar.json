@@ -1,0 +1,6 @@
+{
+  "start_month": 4,
+  "weeks_per_month": 4,
+  "closed_weekday": 6,
+  "debt_game_over_months": 6
+}

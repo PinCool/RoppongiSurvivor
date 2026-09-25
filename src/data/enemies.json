@@ -1,0 +1,40 @@
+{
+  "enemies": [
+    {
+      "id": "salaryman",
+      "name_key": "enemy.salaryman",
+      "visual_id": "salaryman",
+      "max_hp": 12,
+      "move_speed": 120,
+      "radius": 20,
+      "contact_damage": 5,
+      "exp": 1,
+      "from_seconds": 0,
+      "weight": 5
+    },
+    {
+      "id": "freeter",
+      "name_key": "enemy.freeter",
+      "visual_id": "sweats",
+      "max_hp": 7,
+      "move_speed": 165,
+      "radius": 18,
+      "contact_damage": 4,
+      "exp": 1,
+      "from_seconds": 20,
+      "weight": 3
+    },
+    {
+      "id": "drunk",
+      "name_key": "enemy.drunk",
+      "visual_id": "hood",
+      "max_hp": 40,
+      "move_speed": 90,
+      "radius": 24,
+      "contact_damage": 9,
+      "exp": 4,
+      "from_seconds": 70,
+      "weight": 1
+    }
+  ]
+}

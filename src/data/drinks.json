@@ -1,0 +1,10 @@
+{
+  "drinks": [
+    { "id": "cast_drink", "name_key": "drink.cast_drink", "price": 1000, "mp_cost": 4, "base_success": 0.85, "drunk": 2 },
+    { "id": "shot", "name_key": "drink.shot", "price": 2000, "mp_cost": 6, "base_success": 0.75, "drunk": 5 },
+    { "id": "wine_bottle", "name_key": "drink.wine_bottle", "price": 10000, "mp_cost": 15, "base_success": 0.55, "drunk": 8 },
+    { "id": "champagne", "name_key": "drink.champagne", "price": 30000, "mp_cost": 30, "base_success": 0.4, "drunk": 12 },
+    { "id": "rose_champagne", "name_key": "drink.rose_champagne", "price": 80000, "mp_cost": 55, "base_success": 0.28, "drunk": 15 },
+    { "id": "gold_champagne", "name_key": "drink.gold_champagne", "price": 200000, "mp_cost": 90, "base_success": 0.16, "drunk": 20 }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "items": [
+    { "id": "gym_drop_in", "name_key": "self_care.gym_drop_in", "category": "beauty", "cost": 3000, "gains": { "beauty": 2 }, "hobbies": {}, "min_level": 1 },
+    { "id": "nail_salon", "name_key": "self_care.nail_salon", "category": "beauty", "cost": 8000, "gains": { "beauty": 3, "sense": 1 }, "hobbies": {}, "min_level": 1 },
+    { "id": "esthetic", "name_key": "self_care.esthetic", "category": "beauty", "cost": 20000, "gains": { "beauty": 6 }, "hobbies": {}, "min_level": 3 },
+    { "id": "manga_cafe", "name_key": "self_care.manga_cafe", "category": "intellect", "cost": 1500, "gains": { "intellect": 1 }, "hobbies": { "anime": 1 }, "min_level": 1 },
+    { "id": "business_book", "name_key": "self_care.business_book", "category": "intellect", "cost": 2500, "gains": { "intellect": 2 }, "hobbies": { "business": 1 }, "min_level": 1 },
+    { "id": "golf_lesson", "name_key": "self_care.golf_lesson", "category": "intellect", "cost": 12000, "gains": { "intellect": 2 }, "hobbies": { "golf": 1 }, "min_level": 1 },
+    { "id": "wine_school", "name_key": "self_care.wine_school", "category": "intellect", "cost": 25000, "gains": { "intellect": 3 }, "hobbies": { "wine": 1 }, "min_level": 4 },
+    { "id": "live_house", "name_key": "self_care.live_house", "category": "sense", "cost": 4000, "gains": { "sense": 1 }, "hobbies": { "music": 1 }, "min_level": 1 },
+    { "id": "museum", "name_key": "self_care.museum", "category": "sense", "cost": 2000, "gains": { "sense": 1 }, "hobbies": { "art": 1 }, "min_level": 1 },
+    { "id": "clothes_cute", "name_key": "self_care.clothes_cute", "category": "sense", "cost": 18000, "gains": { "sense": 5 }, "hobbies": {}, "min_level": 2 }
+  ]
+}

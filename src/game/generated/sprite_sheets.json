@@ -1,0 +1,124 @@
+{
+  "player": {
+    "frame_width": 129,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 6
+      },
+      "run_side": {
+        "start": 6,
+        "count": 6
+      },
+      "run_front": {
+        "start": 12,
+        "count": 6
+      },
+      "run_back": {
+        "start": 18,
+        "count": 6
+      }
+    }
+  },
+  "salaryman": {
+    "frame_width": 103,
+    "frame_height": 150,
+    "clips": {
+      "walk": {
+        "start": 0,
+        "count": 6
+      }
+    }
+  },
+  "sweats": {
+    "frame_width": 120,
+    "frame_height": 150,
+    "clips": {
+      "walk": {
+        "start": 0,
+        "count": 6
+      }
+    }
+  },
+  "hood": {
+    "frame_width": 94,
+    "frame_height": 150,
+    "clips": {
+      "walk": {
+        "start": 0,
+        "count": 6
+      }
+    }
+  },
+  "bandman": {
+    "frame_width": 111,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 4
+      },
+      "walk": {
+        "start": 4,
+        "count": 6
+      }
+    }
+  },
+  "host": {
+    "frame_width": 111,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 4
+      },
+      "walk": {
+        "start": 4,
+        "count": 6
+      }
+    }
+  },
+  "tora": {
+    "frame_width": 120,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 4
+      },
+      "walk": {
+        "start": 4,
+        "count": 6
+      }
+    }
+  },
+  "punch": {
+    "frame_width": 120,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 4
+      },
+      "walk": {
+        "start": 4,
+        "count": 6
+      }
+    }
+  },
+  "regent": {
+    "frame_width": 108,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 4
+      },
+      "walk": {
+        "start": 4,
+        "count": 6
+      }
+    }
+  }
+}

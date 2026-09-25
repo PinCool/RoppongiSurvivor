@@ -1,0 +1,49 @@
+{
+  "customers": [
+    {
+      "id": "bandman", "name_key": "customer.bandman", "visual_id": "bandman", "rank": "C",
+      "min_stage": 1, "weight": 4,
+      "wallet_min": 6000, "wallet_max": 15000,
+      "preference": "sense", "preference_min": 12,
+      "hobby": "music", "hobby_level": 1,
+      "mood_weights": { "wild": 2, "fun": 2, "calm": 1 },
+      "companion_mp_cost": 12
+    },
+    {
+      "id": "office_manager", "name_key": "customer.office_manager", "visual_id": "punch", "rank": "C",
+      "min_stage": 1, "weight": 4,
+      "wallet_min": 10000, "wallet_max": 30000,
+      "preference": "beauty", "preference_min": 12,
+      "hobby": "golf", "hobby_level": 1,
+      "mood_weights": { "wild": 1, "fun": 2, "calm": 2 },
+      "companion_mp_cost": 15
+    },
+    {
+      "id": "it_ceo", "name_key": "customer.it_ceo", "visual_id": "host", "rank": "B",
+      "min_stage": 2, "weight": 3,
+      "wallet_min": 30000, "wallet_max": 90000,
+      "preference": "intellect", "preference_min": 16,
+      "hobby": "business", "hobby_level": 1,
+      "mood_weights": { "wild": 2, "fun": 1, "calm": 1 },
+      "companion_mp_cost": 22
+    },
+    {
+      "id": "artist", "name_key": "customer.artist", "visual_id": "regent", "rank": "B",
+      "min_stage": 3, "weight": 2,
+      "wallet_min": 20000, "wallet_max": 70000,
+      "preference": "sense", "preference_min": 18,
+      "hobby": "art", "hobby_level": 2,
+      "mood_weights": { "wild": 1, "fun": 1, "calm": 3 },
+      "companion_mp_cost": 20
+    },
+    {
+      "id": "real_estate", "name_key": "customer.real_estate", "visual_id": "tora", "rank": "A",
+      "min_stage": 5, "weight": 1,
+      "wallet_min": 80000, "wallet_max": 250000,
+      "preference": "beauty", "preference_min": 24,
+      "hobby": "wine", "hobby_level": 2,
+      "mood_weights": { "wild": 3, "fun": 1, "calm": 1 },
+      "companion_mp_cost": 35
+    }
+  ]
+}

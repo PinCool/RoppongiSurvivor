@@ -1,0 +1,10 @@
+{
+  "hobbies": [
+    { "id": "music", "name_key": "hobby.music" },
+    { "id": "golf", "name_key": "hobby.golf" },
+    { "id": "business", "name_key": "hobby.business" },
+    { "id": "art", "name_key": "hobby.art" },
+    { "id": "wine", "name_key": "hobby.wine" },
+    { "id": "anime", "name_key": "hobby.anime" }
+  ]
+}

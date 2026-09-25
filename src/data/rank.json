@@ -1,0 +1,12 @@
+{
+  "weights": { "level": 20, "beauty": 3, "intellect": 3, "sense": 3, "max_hp": 0.05, "max_mp": 0.05, "hobby_level": 10 },
+  "letters": [
+    { "letter": "D", "min": 0 },
+    { "letter": "C", "min": 300 },
+    { "letter": "B", "min": 800 },
+    { "letter": "A", "min": 2000 },
+    { "letter": "S", "min": 6000 },
+    { "letter": "SS", "min": 20000 },
+    { "letter": "SSS", "min": 100000 }
+  ]
+}

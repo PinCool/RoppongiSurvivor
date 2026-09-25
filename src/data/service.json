@@ -1,0 +1,11 @@
+{
+  "mood_lines_per_mood": 2,
+  "vibe_match_bonus": 0.15,
+  "vibe_miss_penalty": 0.15,
+  "preference_bonus": 0.15,
+  "preference_penalty": 0.1,
+  "hobby_bonus": 0.1,
+  "min_success": 0.05,
+  "max_success": 0.95,
+  "patience": 3
+}

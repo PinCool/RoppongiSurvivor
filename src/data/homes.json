@@ -1,0 +1,7 @@
+{
+  "homes": [
+    { "id": "oneroom_6jo", "name_key": "home.oneroom_6jo", "rent": 95000, "rank_score": 0, "pet_allowed": false },
+    { "id": "one_ldk", "name_key": "home.one_ldk", "rent": 160000, "rank_score": 300, "pet_allowed": true },
+    { "id": "tower_3ldk", "name_key": "home.tower_3ldk", "rent": 900000, "rank_score": 5000, "pet_allowed": true }
+  ]
+}
