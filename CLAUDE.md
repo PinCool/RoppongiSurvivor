@@ -60,6 +60,8 @@ npm run build                         # dist/ に静的ファイル（LINE ミ�
 **外部からの確認は GitHub Pages**: https://pincool.github.io/RoppongiSurvivor/ —— main に push すると
 `.github/workflows/pages.yml` が `npm run check` を通してから公開する（テストが落ちたら公開されない）。
 リポジトリ（PinCool/RoppongiSurvivor）は **public**（組織が無料プランで、private では Pages が使えないため 2026-09-25 に公開した）。
+同日に一度 Cloudflare Pages（Access で閲覧を絞る）へ移したが、「アカウントを作らないと他の人が見られない」で GitHub Pages に戻した。
+`cloudflare-setup.yml` は手動実行だけの残り（push では動かない）。
 
 **開発サーバでは `window.__rs = { game, session }` が生えている**（`src/main.ts`。本番ビルドには入らない）。
 `__rs.game.scene.getScene('Street')._sim` でシミュレーションを早送り・瞬間移動できる（shot.mjs が使っている）。
