@@ -1,5 +1,6 @@
-# main に push されたら、型チェックとテストを通してから GitHub Pages へ公開する（外部からの確認用）
-name: Deploy to GitHub Pages
+# main に push されたら、型チェックとテストを通してから Cloudflare Pages へ公開する（確認用）
+# 閲覧は Cloudflare Access で亀田だけに絞ってある（cloudflare-setup.yml）
+name: Deploy to Cloudflare Pages
 
 on:
   push:
@@ -8,15 +9,13 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,16 +26,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npx vite build
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      - run: npx --yes wrangler@4 pages deploy dist --project-name roppongi-survivor --branch main --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}

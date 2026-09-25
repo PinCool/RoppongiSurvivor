@@ -1,9 +1,7 @@
-# 一度きりの初期設定: Cloudflare Pages のプロジェクトと、Access（亀田だけが見られる）を作る。何度流しても同じ結果になる
+# 初期設定（見られる人を変えるときは VIEWER を直して Actions から手動で流す）: Cloudflare Pages のプロジェクトと、Access（亀田だけが見られる）を作る。何度流しても同じ結果になる
 name: Cloudflare setup
 
 on:
-  push:
-    branches: [cloudflare-setup]
   workflow_dispatch:
 
 permissions:
