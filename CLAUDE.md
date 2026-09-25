@@ -25,7 +25,8 @@ src/
 ├─ core/            純粋 TS。ゲームロジック全部（Node の Vitest でそのまま回る）。時刻・日付は Game が渡す
 │  ├─ data/         JSON の型・形の検査（知らないキー＝綴り間違いも落とす）・読み込み
 │  ├─ career/       主人公の状態（セーブ版 2）・暦・1 日の終わり（回復・家賃・月額・期間切れ）・レベル・自分磨き・能力値（stats）・
-│  │                ランク・源氏名・出勤の精算・ライバル・実時間回復・ログインボーナス
+│  │                ランク・源氏名・出勤の精算・ライバル・実時間回復・ログインボーナス・
+│  │                デイリーミッション（missions）・図鑑と常連（book）・店内ランキング（ranking）
 │  ├─ street/       集客パート（ヴァンサバ風）。固定タイムステップ 1/60
 │  └─ service/      接客パート（ノリの 3 択 → ドリンクのおねだり）
 ├─ game/            Phaser。core を見て描くだけ
@@ -96,6 +97,10 @@ npm run build                         # dist/ に静的ファイル（LINE ミ�
   建物の絵は TokyoSurvivor の夜のパステルの街（`tools/import_tokyo_buildings.py`）。床の色は夜のコンセプト画から実測
 - **スティックは画面の向きのまま**（上に倒せば画面の上へ）。地面の向きへは `stickToGround` で直す
 - **自機が建物の裏に回ったら、手前の建物を半透明にする**（`StreetScene.fadeOccluders`）
+- **建物の絵は TokyoSurvivor の今の世代（Image2.5・種類 58〜81）だけ**。旧 buildingart 世代は使わない（テストが見張る）。
+  足元は `data/buildings.json`、絵の pivot と倍率は取り込みの生成物。絵の床の左の辺が地面の x（= TokyoSurvivor の d）
+- **建物の隙間は「くっつく」か「min_alley 以上」だけ**（`city.ts` の closeSlivers / dropSlivers）。経路のマスは自機の大きさで判定。
+  中途半端な隙間は「挟まって動けない」「自機だけ入れる安全地帯」の両方を生んだ
 
 ## 使わないもの（いまのところ）
 

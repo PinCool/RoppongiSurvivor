@@ -7,10 +7,13 @@ import enemies from '../src/data/enemies.json';
 import hobbies from '../src/data/hobbies.json';
 import homes from '../src/data/homes.json';
 import loginBonus from '../src/data/login_bonus.json';
+import missions from '../src/data/missions.json';
 import ngWords from '../src/data/ng_words.json';
 import player from '../src/data/player.json';
 import rank from '../src/data/rank.json';
+import ranking from '../src/data/ranking.json';
 import recruit from '../src/data/recruit.json';
+import regulars from '../src/data/regulars.json';
 import rivals from '../src/data/rivals.json';
 import selfCare from '../src/data/self_care.json';
 import service from '../src/data/service.json';
@@ -34,6 +37,9 @@ function rawData() {
     rivals: rivals.rivals,
     loginBonus,
     buildings: buildings.buildings,
+    missions,
+    regulars,
+    ranking,
     homes: homes.homes,
     calendar,
     rank,

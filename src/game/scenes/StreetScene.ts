@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { isNewCustomer, regularLevelOf } from '../../core/career/book';
 import { nextSeed } from '../../core/career/playerState';
 import { activeRival } from '../../core/career/rival';
 import { spendAdRefill } from '../../core/career/work';
@@ -603,6 +604,14 @@ export class StreetScene extends Phaser.Scene {
     root.add(portrait);
     root.add(this.add.text(WIDTH / 2, top + 290, t('street.encounter.title', { name: t(type.name_key), rank: type.rank }), titleStyle(32)).setOrigin(0.5));
     root.add(this.add.text(WIDTH / 2, top + 338, t('street.encounter.hint'), textStyle(22, CSS.sub)).setOrigin(0.5));
+    // 初めて会うお客は NEW!、常連なら Lv を名前の上に
+    const p0 = session.player;
+    const badge = isNewCustomer(p0, customer.typeId)
+      ? t('street.encounter.new')
+      : t('street.encounter.regular', { level: regularLevelOf(p0, session.data, customer.typeId) });
+    const badgeText = this.add.text(WIDTH / 2 + 150, top + 70, badge, titleStyle(30, isNewCustomer(p0, customer.typeId) ? '#ff4f6e' : '#9b6bff')).setOrigin(0.5).setAngle(12);
+    root.add(badgeText);
+    this.tweens.add({ targets: badgeText, scale: 1.12, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 
     const buttons = new Map<RecruitChoice, Button>();
     const choose = (choice: RecruitChoice) => {

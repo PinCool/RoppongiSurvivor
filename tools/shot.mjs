@@ -39,7 +39,11 @@ const fastForward = (seconds) =>
   page.evaluate((sec) => {
     const sim = window.__rs.game.scene.getScene('Street')._sim;
     const end = sim.time + sec;
-    while (sim.time < end && !sim.paused) sim.tick({ move: { x: 0, y: 0 } });
+    // 撮影のために立ち止まって早送りするので、倒れないよう HP を保つ（ゲームの挙動は変えない）
+    while (sim.time < end && !sim.paused) {
+      sim.player.hp = sim.player.maxHp;
+      sim.tick({ move: { x: 0, y: 0 } });
+    }
     return sim.time;
   }, seconds);
 const companions = () => page.evaluate(() => window.__rs.game.scene.getScene('Street')._sim.companions.length);
@@ -70,6 +74,14 @@ await shot('02_login_bonus');
 await tap(360, 760); // 受け取る
 await wait(500);
 await shot('02_home');
+// ホームのメニュー（部屋の右側）: ミッション・図鑑・ランキング
+for (const [name, y] of [['02a_missions', 346], ['02b_book', 436], ['02c_ranking', 526]]) {
+  await tap(616, y);
+  await wait(500);
+  await shot(name);
+  await tap(360, 1150); // とじる
+  await wait(400);
+}
 
 await tap(360, 1080);
 await waitScene('Street');

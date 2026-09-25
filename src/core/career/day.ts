@@ -1,6 +1,8 @@
 import { byId } from '../data/gameData';
 import type { GameData } from '../data/types';
-import { crossesMonth } from './calendar';
+import { crossesMonth, isClosedDay } from './calendar';
+import { Rng } from '../rng';
+import { advanceNpcs, settleMonth, type MonthResult } from './ranking';
 import type { PlayerState } from './playerState';
 import { monthlyFees } from './selfCare';
 
@@ -10,6 +12,8 @@ export interface DayReport {
   hangover: boolean;
   /** 今朝切れた期間つきの自分磨き。rebound はその反動で素の能力値から引いた量 */
   expired: { itemId: string; rebound: number }[];
+  /** 月末だけ。店内ランキングの締め（順位と報酬） */
+  ranking: MonthResult | null;
   gameOver: boolean;
 }
 
@@ -29,6 +33,11 @@ export function endDay(state: PlayerState, data: GameData): DayReport {
   state.mp = Math.min(state.maxMp, state.mp + Math.round(state.maxMp * mpRatio));
   state.drunk = Math.floor(state.drunk * p.overnight.drunk_decay_ratio);
 
+  // 店内ランキング: 営業日なら NPC も売り上げる。月をまたぐなら締めて報酬（家賃の前に受け取る）
+  if (!isClosedDay(state.day, data.calendar)) advanceNpcs(state, data, new Rng((state.seed ^ (state.day * 0x9e3779b1)) >>> 0));
+  let ranking: MonthResult | null = null;
+  if (crossesMonth(state.day, data.calendar)) ranking = settleMonth(state, data);
+
   let settlement: DayReport['settlement'] = null;
   if (crossesMonth(state.day, data.calendar)) {
     const rent = byId(data.homes, state.homeId).rent;
@@ -45,7 +54,7 @@ export function endDay(state: PlayerState, data: GameData): DayReport {
   state.actionsLeft = p.actions_per_day;
   state.adRefillsLeft = p.ad_refills_per_day;
   state.workedToday = false;
-  return { settlement, hangover, expired, gameOver: state.gameOver };
+  return { settlement, hangover, expired, ranking, gameOver: state.gameOver };
 }
 
 /** 期限の来た効き目を外し、反動（rebound）の分だけ素の能力値を下げる。能力値は 0 未満にしない */

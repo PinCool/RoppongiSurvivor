@@ -63,6 +63,10 @@ export class ResultScene extends Phaser.Scene {
       const type = byId(session.data.customers, guest.typeId);
       const line = t(guest.left ? 'result.guest_left' : 'result.guest', { name: t(type.name_key), sales: yen(guest.sales) });
       this.add.text(70, guestTop + i * 46, line, textStyle(24, guest.left ? CSS.dim : CSS.text));
+      // 図鑑: 初来店・常連 Lv が上がった
+      const visit = report.visits[i];
+      const note = visit?.firstTime ? t('result.first_visit') : visit && visit.levelAfter > visit.levelBefore ? t('result.regular_up', { level: visit.levelAfter }) : '';
+      if (note) this.add.text(WIDTH - 70, guestTop + i * 46, note, textStyle(22, CSS.customer)).setOrigin(1, 0);
     });
     if (report.guests.length === 0 && report.outcome !== 'down') {
       this.add.text(70, guestTop, t('result.no_guests'), textStyle(24, CSS.dim));

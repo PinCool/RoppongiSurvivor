@@ -149,6 +149,8 @@ export interface DrinkData {
   mp_cost: number;
   base_success: number;
   drunk: number;
+  /** シャンパン系か（ミッション「シャンパンを入れてもらう」で数える） */
+  champagne: boolean;
 }
 
 export interface ServiceData {
@@ -250,6 +252,35 @@ export interface RankData {
   letters: { letter: string; min: number }[];
 }
 
+export type MissionKind = 'kills' | 'companions' | 'shift_sales' | 'goal_shifts' | 'champagne' | 'self_care' | 'vibe_match';
+export type MissionRewardKind = 'money' | 'mp_full' | 'ad_refill';
+export interface MissionReward {
+  kind: MissionRewardKind;
+  amount: number;
+}
+
+/** デイリーミッション。端末の暦で 1 日ごとに pool から daily_count 個 */
+export interface MissionData {
+  daily_count: number;
+  pool: { id: string; kind: MissionKind; target: number; reward: MissionReward }[];
+  complete_all_reward: MissionReward;
+}
+
+/** 常連。接客した回数が level_visits[n] に届くと常連 Lv n+1。レベルごとに成功率と財布が上がる */
+export interface RegularsData {
+  level_visits: number[];
+  success_bonus_per_level: number;
+  wallet_bonus_per_level: number;
+}
+
+/** 店内の月間売上ランキング（NPC のキャストと競う。サーバのランキングができるまでの端末内の版） */
+export interface RankingData {
+  npcs: { id: string; name_key: string; daily_min: number; daily_max: number }[];
+  /** NPC の売上がステージごとに伸びる割合（主人公の成長に合わせて手強くなる） */
+  growth_per_stage: number;
+  rewards: { rank: number; money: number }[];
+}
+
 export interface GameData {
   player: PlayerData;
   street: StreetData;
@@ -263,6 +294,9 @@ export interface GameData {
   rivals: RivalData[];
   loginBonus: LoginBonusData;
   buildings: BuildingKindData[];
+  missions: MissionData;
+  regulars: RegularsData;
+  ranking: RankingData;
   homes: HomeData[];
   calendar: CalendarData;
   rank: RankData;

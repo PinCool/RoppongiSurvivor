@@ -1,0 +1,10 @@
+{
+  "level_visits": [
+    1,
+    3,
+    6,
+    10
+  ],
+  "success_bonus_per_level": 0.03,
+  "wallet_bonus_per_level": 0.1
+}

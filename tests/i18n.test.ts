@@ -51,7 +51,10 @@ describe('i18n のキー', () => {
       for (let i = 1; i <= data.service.mood_lines_per_mood; i++) keys.push(`service.mood.${vibe}.${i}`);
     }
     for (const kind of ['order_ok', 'over_wallet', 'declined', 'guest_left']) keys.push(`service.line.${kind}.1`, `service.line.${kind}.2`);
-    for (const tag of ['vibe_match', 'vibe_miss', 'preference_match', 'preference_miss', 'hobby']) keys.push(`service.tag.${tag}`);
+    for (const tag of ['vibe_match', 'vibe_miss', 'preference_match', 'preference_miss', 'hobby', 'regular']) keys.push(`service.tag.${tag}`);
+    for (const m of data.missions.pool) keys.push(`mission.kind.${m.kind}`);
+    for (const r of ['mp_full', 'ad_refill']) keys.push(`mission.reward.${r}`);
+    for (const n of data.ranking.npcs) keys.push(n.name_key);
     for (const stat of [...STAT_IDS, 'hp', 'mp', 'drunk', 'exp']) keys.push(`stat.${stat}`);
     for (const hobby of data.hobbies) keys.push(`hobby.${hobby.id}`);
     for (let d = 0; d < 7; d++) keys.push(`weekday.${d}`);

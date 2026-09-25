@@ -1,4 +1,6 @@
 import type { GameData } from '../data/types';
+import { recordVisit, type VisitResult } from './book';
+import { recordMission } from './missions';
 import { activeRival } from './rival';
 import type { ServiceResult } from '../service/serviceSession';
 import type { OutcomeKind, StreetOutcome } from '../street/streetSim';
@@ -21,6 +23,8 @@ export interface ShiftReport {
   guests: ServiceResult['guests'];
   /** 関門のステージだったときだけ。won ならステージが進み、ライバルを倒したことになる */
   rival: { id: string; target: number; won: boolean } | null;
+  /** 接客したお客ごとの図鑑の記録（初めて・常連 Lv が上がった） */
+  visits: VisitResult[];
 }
 
 /**
@@ -48,6 +52,18 @@ export function applyShift(state: PlayerState, data: GameData, street: StreetOut
   if (street.kind === 'goal' && (rival === null || rivalWon)) state.stageLevel += 1;
   if (rival && rivalWon) state.defeatedRivals.push(rival.id);
   const levelsGained = addExp(state, exp, p);
+  state.monthSales += sales;
+
+  // 図鑑（途中で帰ったお客も「来てくれた」ので数える）
+  const visits = (service?.guests ?? []).map((g) => recordVisit(state, data, g.typeId, g.sales));
+
+  // デイリーミッション
+  recordMission(state, data, 'kills', street.kills);
+  recordMission(state, data, 'companions', street.companions.length);
+  recordMission(state, data, 'shift_sales', sales);
+  if (street.kind === 'goal') recordMission(state, data, 'goal_shifts', 1);
+  recordMission(state, data, 'champagne', service?.champagneOrders ?? 0);
+  recordMission(state, data, 'vibe_match', service?.vibeMatches ?? 0);
 
   return {
     outcome: street.kind,
@@ -62,5 +78,6 @@ export function applyShift(state: PlayerState, data: GameData, street: StreetOut
     drunkGained,
     guests: service?.guests ?? [],
     rival: rival ? { id: rival.id, target: rival.sales_target, won: rivalWon } : null,
+    visits,
   };
 }

@@ -17,6 +17,8 @@ export interface ServicePlayer {
   intellect: number;
   sense: number;
   hobbies: Record<string, number>;
+  /** お客の種類 → 常連 Lv（無ければ 0） */
+  regulars?: Record<string, number>;
 }
 
 export type ServicePhase = 'vibe' | 'drink' | 'left' | 'done';
@@ -27,7 +29,8 @@ export type BonusTag =
   | { kind: 'vibe_miss' }
   | { kind: 'preference_match'; stat: StatId }
   | { kind: 'preference_miss'; stat: StatId }
-  | { kind: 'hobby'; hobbyId: string };
+  | { kind: 'hobby'; hobbyId: string }
+  | { kind: 'regular'; level: number };
 
 export interface ServiceGuest {
   typeId: string;
@@ -70,6 +73,9 @@ export interface ServiceResult {
   mpLeft: number;
   drunkGained: number;
   guests: { typeId: string; sales: number; left: boolean }[];
+  /** 入ったシャンパン系の数・ノリが合った数（デイリーミッション） */
+  champagneOrders: number;
+  vibeMatches: number;
 }
 
 export class ServiceSession {
@@ -81,6 +87,8 @@ export class ServiceSession {
   private _phase: ServicePhase;
   private _mp: number;
   private _drunkGained = 0;
+  private _champagneOrders = 0;
+  private _vibeMatches = 0;
   private readonly _leftEarly = new Set<number>();
 
   constructor(data: GameData, player: ServicePlayer, companions: readonly Companion[], seed: number) {
@@ -117,6 +125,7 @@ export class ServiceSession {
     const guest = this.requireGuest('vibe');
     guest.vibe = vibe;
     const matched = guest.mood === vibe;
+    if (matched) this._vibeMatches++;
     this._phase = 'drink';
     return { matched, reactionKey: `service.reaction.${matched ? 'match' : 'miss'}.${guest.mood}` };
   }
@@ -130,6 +139,8 @@ export class ServiceSession {
     const stat = type.preference;
     tags.push(this._player[stat] >= type.preference_min ? { kind: 'preference_match', stat } : { kind: 'preference_miss', stat });
     if ((this._player.hobbies[type.hobby] ?? 0) >= type.hobby_level) tags.push({ kind: 'hobby', hobbyId: type.hobby });
+    const level = this._player.regulars?.[guest.typeId] ?? 0;
+    if (level > 0) tags.push({ kind: 'regular', level });
     return tags;
   }
 
@@ -153,6 +164,9 @@ export class ServiceSession {
           break;
         case 'hobby':
           chance += s.hobby_bonus;
+          break;
+        case 'regular':
+          chance += this._data.regulars.success_bonus_per_level * tag.level;
           break;
       }
     }
@@ -179,6 +193,7 @@ export class ServiceSession {
       guest.wallet -= drink.price;
       guest.sales += drink.price;
       this._drunkGained += drink.drunk;
+      if (drink.champagne) this._champagneOrders++;
       return { success: true, drinkId, price: drink.price, mpCost: drink.mp_cost, failReason, reactionKey: this.lineKey('order_ok'), guestLeft: false };
     }
 
@@ -209,6 +224,8 @@ export class ServiceSession {
       mpLeft: this._mp,
       drunkGained: this._drunkGained,
       guests: this.guests.map((g, i) => ({ typeId: g.typeId, sales: g.sales, left: this._leftEarly.has(i) })),
+      champagneOrders: this._champagneOrders,
+      vibeMatches: this._vibeMatches,
     };
   }
 
@@ -221,7 +238,8 @@ export class ServiceSession {
       visualId: type.visual_id,
       mood,
       moodLineKey: `service.mood.${mood}.${line}`,
-      wallet: companion.wallet,
+      // 常連ほど財布の紐がゆるい
+      wallet: Math.round(companion.wallet * (1 + this._data.regulars.wallet_bonus_per_level * (this._player.regulars?.[type.id] ?? 0))),
       patience: this._data.service.patience,
       sales: 0,
       vibe: null,

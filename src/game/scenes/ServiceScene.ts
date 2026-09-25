@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { regularLevels } from '../../core/career/book';
 import { effectiveStats } from '../../core/career/stats';
 import { byId } from '../../core/data/gameData';
 import { VIBES, type Vibe } from '../../core/data/types';
@@ -41,7 +42,7 @@ export class ServiceScene extends Phaser.Scene {
     this._session = new ServiceSession(
       session.data,
       // 能力値は期間つき・月額の効き目込み
-      { mp: street.mp, ...effectiveStats(p, session.data), hobbies: p.hobbies },
+      { mp: street.mp, ...effectiveStats(p, session.data), hobbies: p.hobbies, regulars: regularLevels(p, session.data) },
       street.companions,
       p.seed ^ 0x5bd1e995,
     );
@@ -168,13 +169,15 @@ export class ServiceScene extends Phaser.Scene {
     this._tags.removeAll(true);
     let x = 40;
     tags.forEach((tag, i) => {
-      const good = tag.kind === 'vibe_match' || tag.kind === 'preference_match' || tag.kind === 'hobby';
+      const good = tag.kind === 'vibe_match' || tag.kind === 'preference_match' || tag.kind === 'hobby' || tag.kind === 'regular';
       const label =
         tag.kind === 'preference_match' || tag.kind === 'preference_miss'
           ? t(`service.tag.${tag.kind}`, { stat: t(`stat.${tag.stat}`) })
           : tag.kind === 'hobby'
             ? t('service.tag.hobby', { hobby: t(`hobby.${tag.hobbyId}`) })
-            : t(`service.tag.${tag.kind}`);
+            : tag.kind === 'regular'
+              ? t('service.tag.regular', { level: tag.level })
+              : t(`service.tag.${tag.kind}`);
       const colors = good ? BUTTON.mint : BUTTON.primary;
       const text = this.add.text(0, 0, label, textStyle(22, '#ffffff', { stroke: colors.stroke, strokeThickness: 4 })).setOrigin(0, 0.5);
       const w = text.width + 28;

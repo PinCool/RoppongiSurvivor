@@ -1,0 +1,99 @@
+{
+  "daily_count": 3,
+  "pool": [
+    {
+      "id": "kills_60",
+      "kind": "kills",
+      "target": 60,
+      "reward": {
+        "kind": "money",
+        "amount": 5000
+      }
+    },
+    {
+      "id": "kills_150",
+      "kind": "kills",
+      "target": 150,
+      "reward": {
+        "kind": "money",
+        "amount": 12000
+      }
+    },
+    {
+      "id": "companions_3",
+      "kind": "companions",
+      "target": 3,
+      "reward": {
+        "kind": "mp_full",
+        "amount": 0
+      }
+    },
+    {
+      "id": "companions_5",
+      "kind": "companions",
+      "target": 5,
+      "reward": {
+        "kind": "money",
+        "amount": 10000
+      }
+    },
+    {
+      "id": "sales_20000",
+      "kind": "shift_sales",
+      "target": 20000,
+      "reward": {
+        "kind": "money",
+        "amount": 8000
+      }
+    },
+    {
+      "id": "sales_60000",
+      "kind": "shift_sales",
+      "target": 60000,
+      "reward": {
+        "kind": "money",
+        "amount": 20000
+      }
+    },
+    {
+      "id": "goal_1",
+      "kind": "goal_shifts",
+      "target": 1,
+      "reward": {
+        "kind": "ad_refill",
+        "amount": 1
+      }
+    },
+    {
+      "id": "champagne_1",
+      "kind": "champagne",
+      "target": 1,
+      "reward": {
+        "kind": "money",
+        "amount": 15000
+      }
+    },
+    {
+      "id": "self_care_2",
+      "kind": "self_care",
+      "target": 2,
+      "reward": {
+        "kind": "mp_full",
+        "amount": 0
+      }
+    },
+    {
+      "id": "vibe_match_2",
+      "kind": "vibe_match",
+      "target": 2,
+      "reward": {
+        "kind": "money",
+        "amount": 6000
+      }
+    }
+  ],
+  "complete_all_reward": {
+    "kind": "money",
+    "amount": 20000
+  }
+}

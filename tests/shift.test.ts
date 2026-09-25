@@ -8,7 +8,7 @@ import { freshData } from './helpers';
 const street = (kind: StreetOutcome['kind']): StreetOutcome => ({
   kind, companions: [], streetExp: 20, kills: 30, hp: 55, mp: 40, time: 150,
 });
-const service: ServiceResult = { sales: 50000, mpLeft: 12, drunkGained: 18, guests: [{ typeId: 'bandman', sales: 50000, left: false }] };
+const service: ServiceResult = { sales: 50000, mpLeft: 12, drunkGained: 18, guests: [{ typeId: 'bandman', sales: 50000, left: false }], champagneOrders: 1, vibeMatches: 1 };
 
 describe('出勤の精算', () => {
   it('取り分は売上 × バック率、経験値は集客と売上から、ステージが上がる', () => {

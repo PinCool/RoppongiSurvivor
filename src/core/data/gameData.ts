@@ -6,10 +6,13 @@ import enemies from '../../data/enemies.json';
 import hobbies from '../../data/hobbies.json';
 import homes from '../../data/homes.json';
 import loginBonus from '../../data/login_bonus.json';
+import missions from '../../data/missions.json';
 import ngWords from '../../data/ng_words.json';
 import player from '../../data/player.json';
 import rank from '../../data/rank.json';
+import ranking from '../../data/ranking.json';
 import recruit from '../../data/recruit.json';
+import regulars from '../../data/regulars.json';
 import rivals from '../../data/rivals.json';
 import selfCare from '../../data/self_care.json';
 import service from '../../data/service.json';
@@ -32,6 +35,9 @@ export function loadGameData(): GameData {
     rivals: rivals.rivals,
     loginBonus,
     buildings: buildings.buildings,
+    missions,
+    regulars,
+    ranking,
     homes: homes.homes,
     calendar,
     rank,

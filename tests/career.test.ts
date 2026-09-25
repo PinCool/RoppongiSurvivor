@@ -30,6 +30,12 @@ describe('暦', () => {
   });
 });
 
+
+/** 月末の家賃だけを見るテスト用: NPC の売上を積んでおき、店内ランキングの報酬が入らない順位にする */
+function outrankedByNpcs(s: ReturnType<typeof createPlayer>, data: ReturnType<typeof freshData>) {
+  for (const n of data.ranking.npcs) s.npcSales[n.id] = 1_000_000;
+}
+
 describe('1 日の終わり', () => {
   it('出勤した日は HP 全快・MP 6 割回復、酔いは半分抜ける', () => {
     const data = freshData();
@@ -71,6 +77,7 @@ describe('1 日の終わり', () => {
     const s = createPlayer(data, 'a', 1);
     s.day = 27;
     s.money = 100000;
+    outrankedByNpcs(s, data);
     const report = endDay(s, data);
     expect(report.settlement).toMatchObject({ rent: 95000, moneyAfter: 5000, inDebt: false });
     expect(s.money).toBe(5000);
@@ -83,6 +90,7 @@ describe('1 日の終わり', () => {
     const rent = byId(data.homes, s.homeId).rent;
     for (let month = 1; month <= 6; month++) {
       s.day = month * 28 - 1;
+      outrankedByNpcs(s, data);
       const report = endDay(s, data);
       expect(report.settlement?.inDebt).toBe(true);
       expect(s.debtMonths).toBe(month);

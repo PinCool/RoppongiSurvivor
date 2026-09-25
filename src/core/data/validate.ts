@@ -59,7 +59,7 @@ const SHAPES: Record<keyof GameData, Shape> = {
     },
   },
   recruit: { exp: { mp_cost: N, street_exp: N }, heal: { mp_cost: N, hp: N } },
-  drinks: { array: { id: S, name_key: S, price: N, mp_cost: N, base_success: N, drunk: N } },
+  drinks: { array: { id: S, name_key: S, price: N, mp_cost: N, base_success: N, drunk: N, champagne: B } },
   service: {
     mood_lines_per_mood: N, vibe_match_bonus: N, vibe_miss_penalty: N, preference_bonus: N, preference_penalty: N,
     hobby_bonus: N, min_success: N, max_success: N, patience: N,
@@ -76,6 +76,17 @@ const SHAPES: Record<keyof GameData, Shape> = {
   },
   loginBonus: { cycle: { array: { kind: S, amount: N } } },
   buildings: { array: { id: S, visual_id: S, width: N, depth: N, landmark: B } },
+  missions: {
+    daily_count: N,
+    pool: { array: { id: S, kind: S, target: N, reward: { kind: S, amount: N } } },
+    complete_all_reward: { kind: S, amount: N },
+  },
+  regulars: { level_visits: { array: N }, success_bonus_per_level: N, wallet_bonus_per_level: N },
+  ranking: {
+    npcs: { array: { id: S, name_key: S, daily_min: N, daily_max: N } },
+    growth_per_stage: N,
+    rewards: { array: { rank: N, money: N } },
+  },
   homes: { array: { id: S, name_key: S, rent: N, rank_score: N, pet_allowed: B } },
   calendar: { start_month: N, weeks_per_month: N, closed_weekday: N, debt_game_over_months: N },
   rank: {
@@ -255,6 +266,27 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
   const letters = data.rank.letters;
   if (letters.length === 0 || letters[0]?.min !== 0) errors.push('rank.letters: 先頭の min が 0 でない');
   ascending(letters.map((l) => l.min), 'rank.letters.min', errors);
+
+  const m = data.missions;
+  uniqueIds(m.pool, 'missions.pool', errors);
+  const missionKinds = ['kills', 'companions', 'shift_sales', 'goal_shifts', 'champagne', 'self_care', 'vibe_match'];
+  const rewardKinds = ['money', 'mp_full', 'ad_refill'];
+  if (!(m.daily_count >= 1 && m.daily_count <= m.pool.length)) errors.push('missions.daily_count: 1〜pool の数の外');
+  m.pool.forEach((x, i) => {
+    if (!missionKinds.includes(x.kind)) errors.push(`missions.pool[${i}].kind: 知らない種類 "${x.kind}"`);
+    if (!rewardKinds.includes(x.reward.kind)) errors.push(`missions.pool[${i}].reward.kind: 知らない種類 "${x.reward.kind}"`);
+    positive(x.target, `missions.pool[${i}].target`, errors);
+  });
+  if (!rewardKinds.includes(m.complete_all_reward.kind)) errors.push('missions.complete_all_reward.kind: 知らない種類');
+
+  ascending(data.regulars.level_visits, 'regulars.level_visits', errors);
+  if (data.regulars.level_visits[0] !== undefined && data.regulars.level_visits[0] < 1) errors.push('regulars.level_visits: 1 回目より前');
+
+  uniqueIds(data.ranking.npcs, 'ranking.npcs', errors);
+  data.ranking.npcs.forEach((n, i) => {
+    if (!(n.daily_min >= 0 && n.daily_min <= n.daily_max)) errors.push(`ranking.npcs[${i}]: daily_min/max が不正`);
+  });
+  ascending(data.ranking.rewards.map((r) => r.rank), 'ranking.rewards.rank', errors);
 
   if (errors.length > 0) throw new GameDataError(errors);
   return data;

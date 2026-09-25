@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { dateOf } from '../../core/career/calendar';
 import { endDay, type DayReport } from '../../core/career/day';
 import { claimLoginBonus, type LoginReward } from '../../core/career/loginBonus';
+import { claimableCount, ensureDailyMissions, recordMission } from '../../core/career/missions';
+import { playerRank } from '../../core/career/ranking';
 import { expToNext } from '../../core/career/progression';
 import { rankLetter, totalRankScore } from '../../core/career/rank';
 import { applyRealtimeRecovery } from '../../core/career/recovery';
@@ -18,6 +20,7 @@ import { COLOR, CSS, HEIGHT, WIDTH, drawBackdrop, drawPanel, drawRibbon, textSty
 import { Button } from '../ui/Button';
 import { banner, fadeTo, modal } from '../ui/fx';
 import { Gauge } from '../ui/Gauge';
+import { openBook, openMissions, openRanking } from '../ui/homePanels';
 
 const ROOM_TOP = 96;
 /** 実時間の回復を見に行く間隔 */
@@ -44,6 +47,9 @@ export class HomeScene extends Phaser.Scene {
   private _care!: Button;
   private _sleep!: Button;
   private _ad!: Button;
+  private _missionBadge!: Phaser.GameObjects.Container;
+  private _missionBadgeText!: Phaser.GameObjects.Text;
+  private _rankingButton!: Button;
 
   constructor() {
     super('Home');
@@ -59,6 +65,8 @@ export class HomeScene extends Phaser.Scene {
     this.drawNamePlate();
     this.drawStatusPanel();
     this.drawActions();
+    this.drawMenu();
+    if (ensureDailyMissions(session.player, session.data, todayKey())) session.save();
     this.pollRecovery();
     this.time.addEvent({ delay: RECOVERY_POLL_MS, loop: true, callback: () => this.pollRecovery() });
     this.refresh();
@@ -156,9 +164,29 @@ export class HomeScene extends Phaser.Scene {
     });
   }
 
+  /** 部屋の右側に縦に並ぶメニュー（デイリーミッション・図鑑・店内ランキング） */
+  private drawMenu(): void {
+    const x = WIDTH - 104;
+    const top = ROOM_TOP + 250;
+    const opts = { width: 176, height: 66, fontSize: 24, variant: 'quiet' as const };
+    const mission = new Button(this, x, top, { ...opts, label: t('home.menu.missions'), onClick: () => openMissions(this, () => this.refresh()) });
+    new Button(this, x, top + 90, { ...opts, label: t('home.menu.book'), onClick: () => openBook(this) });
+    this._rankingButton = new Button(this, x, top + 180, { ...opts, label: t('home.menu.ranking'), sub: '', onClick: () => openRanking(this) });
+    // 受け取れる報酬の数（赤い丸）
+    const dot = this.add.circle(0, 0, 20, 0xff4f6e).setStrokeStyle(4, 0xffffff);
+    this._missionBadgeText = this.add.text(0, 0, '', textStyle(20, '#ffffff')).setOrigin(0.5);
+    this._missionBadge = this.add.container(x + 80, top - 30, [dot, this._missionBadgeText]);
+    this.tweens.add({ targets: this._missionBadge, scale: 1.15, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    void mission;
+  }
+
   private refresh(): void {
     const p = session.player;
     const data = session.data;
+    const claimable = claimableCount(p, data);
+    this._missionBadge.setVisible(claimable > 0);
+    this._missionBadgeText.setText(String(claimable));
+    this._rankingButton.setLabel(t('home.menu.ranking'), t('home.menu.rank_now', { rank: playerRank(p, data) }));
     const d = dateOf(p.day, data.calendar);
     this._dateText.setText(t('home.date', { month: d.month, week: d.week, weekday: t(`weekday.${d.weekday}`) }));
     this._moneyText.setText(yen(p.money)).setColor(p.money < 0 ? CSS.bad : CSS.money);
@@ -206,6 +234,13 @@ export class HomeScene extends Phaser.Scene {
     for (const e of report.expired) {
       const name = t(byId(session.data.selfCare, e.itemId).name_key);
       lines.push(e.rebound > 0 ? t('day.expired_rebound', { name, rebound: e.rebound }) : t('day.expired', { name }));
+    }
+    if (report.ranking) {
+      lines.push(
+        report.ranking.reward > 0
+          ? t('day.ranking_reward', { rank: report.ranking.rank, reward: yen(report.ranking.reward) })
+          : t('day.ranking', { rank: report.ranking.rank }),
+      );
     }
     if (report.settlement) {
       const s = report.settlement;
@@ -328,6 +363,7 @@ export class HomeScene extends Phaser.Scene {
       sfx: 'pickup_item',
       onClick: () => {
         applySelfCare(p, item);
+        recordMission(p, session.data, 'self_care', 1);
         session.save();
         banner(this, t('self_care.done', { name: t(item.name_key) }), CSS.good, HEIGHT * 0.18);
         onDone();

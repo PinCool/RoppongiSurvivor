@@ -66,6 +66,7 @@ describe('自分磨き: 月額（ジム）', () => {
     expect(effectiveStat(s, data, 'beauty')).toBe(13);
     expect(monthlyFees(s, data)).toBe(gym.monthly_fee);
     s.day = 27;
+    for (const n of data.ranking.npcs) s.npcSales[n.id] = 1_000_000; // 店内ランキングの報酬を混ぜない
     const moneyBefore = s.money;
     const report = endDay(s, data);
     expect(report.settlement).toMatchObject({ rent: 95000, fees: gym.monthly_fee });
@@ -150,7 +151,7 @@ describe('ログインボーナス', () => {
 
 describe('ライバルの関門', () => {
   const street = (kind: StreetOutcome['kind']): StreetOutcome => ({ kind, companions: [], streetExp: 0, kills: 0, hp: 50, mp: 10, time: 150 });
-  const service = (sales: number) => ({ sales, mpLeft: 0, drunkGained: 0, guests: [] });
+  const service = (sales: number) => ({ sales, mpLeft: 0, drunkGained: 0, guests: [], champagneOrders: 0, vibeMatches: 0 });
 
   it('関門のステージでだけ立ちはだかり、倒したら二度と出ない', () => {
     const data = freshData();
