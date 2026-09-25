@@ -18,6 +18,7 @@ import { COLOR, CSS, HEIGHT, WIDTH, WORLD, drawPanel, textStyle, titleStyle, typ
 import { Button } from '../ui/Button';
 import { banner, fadeTo, floatText, modal, pinToScreen } from '../ui/fx';
 import { Gauge } from '../ui/Gauge';
+import { openSkillCards } from '../ui/skillCards';
 import { VirtualStick } from '../ui/VirtualStick';
 
 const CHARACTER_SCALE = 0.72;
@@ -28,14 +29,17 @@ const ENCOUNTER_ARM_MS = 350;
 /** 地面を描き直す、カメラの移動量（画面 px） */
 const GROUND_REDRAW_PX = 160;
 
-/** 夜のパステルの街の床（TokyoSurvivor の夜のコンセプト fp_backstreet_night.png から実測） */
+/**
+ * 街の床。TokyoSurvivor の IsoMapPalette（いまのゲームで道路・歩道・縁石・標示を塗っている色）そのまま。
+ * 2026-09-25「道路や床の色とかが違う」—— 前は古い夜のコンセプト画から実測した紫の床だった
+ */
 const FLOOR = {
-  road: 0x5a62aa,
-  sidewalk: 0xbe93f5,
-  curb: 0xdcc8ff,
-  plaza: 0xcfb2ff,
-  line: 0xfff3a0,
-  crosswalk: 0xe9e2ff,
+  road: 0x99888a,
+  sidewalk: 0xb4a1a8,
+  curb: 0x8a7b80,
+  plaza: 0xb4a1a8,
+  line: 0xd0bbc3,
+  crosswalk: 0xd0bbc3,
 } as const;
 
 type GroundRect = { x0: number; y0: number; x1: number; y1: number };
@@ -67,6 +71,7 @@ export class StreetScene extends Phaser.Scene {
   private _expBar!: Phaser.GameObjects.Graphics;
   private _companionSlots!: Phaser.GameObjects.Graphics;
   private _encounter: Phaser.GameObjects.Container | null = null;
+  private _skillOpen = false;
   private _finishing = false;
   private _damageNumbers = 0;
 
@@ -79,6 +84,7 @@ export class StreetScene extends Phaser.Scene {
     this._finishing = false;
     this._damageNumbers = 0;
     this._encounter = null;
+    this._skillOpen = false;
     this._goal = null;
     this._rival = null;
     this._groundCenter = null;
@@ -136,7 +142,8 @@ export class StreetScene extends Phaser.Scene {
     this.updateHud();
     this.redrawGroundIfMoved();
 
-    if (sim.pendingEncounter && !this._encounter) this.openEncounter(sim.pendingEncounter);
+    if (sim.skillOffer && !this._skillOpen) this.openSkills();
+    else if (sim.pendingEncounter && !this._encounter && !this._skillOpen) this.openEncounter(sim.pendingEncounter);
     if (sim.outcome && !this._finishing) this.finish();
   }
 
@@ -406,6 +413,11 @@ export class StreetScene extends Phaser.Scene {
       g.fillStyle(WORLD.shotCore, 1);
       g.fillCircle(s.x, s.y - 50, shot.radius * 0.8);
     }
+    // ハートオービット（自機の周りを回るハート。胸の高さ）
+    for (const orb of this._sim.orbitPositions()) {
+      const s = this.iso(orb);
+      this.drawHeart(g, s.x, s.y - 58, 13);
+    }
     // お客の足元のハートの輪（誰がお客さん候補か一目でわかるように）
     const m = this._markers;
     m.clear();
@@ -513,9 +525,7 @@ export class StreetScene extends Phaser.Scene {
         this.cameras.main.flash(120, 255, 120, 150, false);
         break;
       case 'street_level_up':
-        sfx.play('level_up');
-        banner(this, t('street.level_up', { level: event.level }), CSS.good, HEIGHT * 0.36);
-        break;
+        break; // スキルの 3 択（openSkills）が出るので、ここでは何もしない
       case 'customer_spawned':
         sfx.play('pickup_item');
         banner(this, t('street.customer_appeared'), CSS.customer);
@@ -587,6 +597,23 @@ export class StreetScene extends Phaser.Scene {
         slots.strokeCircle(x, 46, 15);
       }
     }
+  }
+
+  // ---------- レベルアップのスキル 3 択 ----------
+
+  private openSkills(): void {
+    const offer = this._sim.skillOffer;
+    if (!offer) return;
+    this._skillOpen = true;
+    this._stick.release();
+    this._stick.enabled = false;
+    sfx.play('level_up');
+    openSkillCards(this, offer, this._sim.skills, (id) => {
+      this._sim.chooseSkill(id);
+      this._skillOpen = false;
+      this._stick.enabled = true;
+      banner(this, t('skill.got', { name: t(`skill.${id}.name`) }), CSS.good, HEIGHT * 0.3);
+    });
   }
 
   // ---------- 遭遇の 3 択 ----------

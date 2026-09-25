@@ -1,0 +1,82 @@
+{
+  "choices": 3,
+  "skills": [
+    {
+      "id": "multishot",
+      "kind": "multishot",
+      "value": 1,
+      "max_level": 3,
+      "weight": 3
+    },
+    {
+      "id": "diagonal",
+      "kind": "diagonal",
+      "value": 35,
+      "max_level": 1,
+      "weight": 2
+    },
+    {
+      "id": "rear",
+      "kind": "rear",
+      "value": 1,
+      "max_level": 1,
+      "weight": 2
+    },
+    {
+      "id": "power",
+      "kind": "power",
+      "value": 0.3,
+      "max_level": 5,
+      "weight": 4
+    },
+    {
+      "id": "rapid",
+      "kind": "rapid",
+      "value": 0.85,
+      "max_level": 5,
+      "weight": 4
+    },
+    {
+      "id": "pierce",
+      "kind": "pierce",
+      "value": 1,
+      "max_level": 2,
+      "weight": 2
+    },
+    {
+      "id": "speed",
+      "kind": "speed",
+      "value": 0.12,
+      "max_level": 3,
+      "weight": 2
+    },
+    {
+      "id": "max_hp",
+      "kind": "max_hp",
+      "value": 25,
+      "max_level": 3,
+      "weight": 2
+    },
+    {
+      "id": "heal",
+      "kind": "heal",
+      "value": 0.4,
+      "max_level": 99,
+      "weight": 3
+    },
+    {
+      "id": "magnet",
+      "kind": "magnet",
+      "value": 0.5,
+      "max_level": 2,
+      "weight": 2
+    },
+    {
+      "id": "orbit",
+      "kind": "orbit",
+      "value": 1,
+      "max_level": 3,
+      "weight": 3
+    }
+  ]
+}

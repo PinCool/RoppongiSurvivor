@@ -95,6 +95,8 @@ npm run build                         # dist/ に静的ファイル（LINE ミ�
   Core は地面の平面（x, y）で、画面への写しは `game/iso.ts`（係数は street.json の `view`。建物の絵の床の菱形 0.645 に合わせてある）。
   街は `core/street/city.ts` が種から作る（道の格子・2×2 の建物・広場）。建物は通れない壁で、敵とライバルは `nav.ts` の流れ場で回り込む。
   建物の絵は TokyoSurvivor の夜のパステルの街（`tools/import_tokyo_buildings.py`）。床の色は夜のコンセプト画から実測
+- **集客のレベルアップはスキルの 3 択**（`skills.json`・`ui/skillCards.ts`）。スキルのアイコンはコードで描く（買ったパックの絵は公開できない）
+- **経路の流れ場は目的地のマスごとにずっと使い回す**（街は変わらない）。毎ティック作り直すと重い。区画のキーは数値（文字列を作らない）
 - **スティックは画面の向きのまま**（上に倒せば画面の上へ）。地面の向きへは `stickToGround` で直す
 - **自機が建物の裏に回ったら、手前の建物を半透明にする**（`StreetScene.fadeOccluders`）
 - **建物の絵は TokyoSurvivor の今の世代（Image2.5・種類 58〜81）だけ**。旧 buildingart 世代は使わない（テストが見張る）。

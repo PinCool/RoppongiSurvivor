@@ -16,6 +16,7 @@ import regulars from '../../data/regulars.json';
 import rivals from '../../data/rivals.json';
 import selfCare from '../../data/self_care.json';
 import service from '../../data/service.json';
+import skills from '../../data/skills.json';
 import street from '../../data/street.json';
 import type { GameData } from './types';
 import { validateGameData } from './validate';
@@ -36,6 +37,7 @@ export function loadGameData(): GameData {
     loginBonus,
     buildings: buildings.buildings,
     missions,
+    skills,
     regulars,
     ranking,
     homes: homes.homes,

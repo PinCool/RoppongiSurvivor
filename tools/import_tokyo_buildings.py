@@ -18,7 +18,7 @@ import json
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 SRC_ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else Path.home() / "TokyoSurvivor")
 SRC = SRC_ROOT / "Assets/_Project/Resources/Map/IsoTown"
@@ -26,6 +26,10 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "public/assets/buildings"
 WIDTH = 420
 PPU = 256.0
+# TokyoSurvivor の IsoMapPalette.BuildingTint / BuildingSaturation（壁の紫を弱める）。実行時に掛けると
+# 建物ごとに描画のパスが増えるので、取り込むときに絵へ焼き込む
+BUILDING_TINT = (235, 255, 242)
+BUILDING_SATURATION = 0.85
 UNITS = 45  # 街の単位 / TokyoSurvivor のワールド単位
 LOT = 206   # street.json の city.lot_size（これに収まらない絵は区画まるごとのランドマーク）
 BLOCK_INNER = 460 - 24  # 区画の内側（pitch − 道幅 × 2）から余白を引いた、ランドマークの上限
@@ -70,7 +74,13 @@ def main() -> None:
     for name, px, py, scale, w, d in KINDS:
         im = Image.open(SRC / f"{name}.png").convert("RGBA")
         h = round(im.height * WIDTH / im.width)
-        im.resize((WIDTH, h), Image.LANCZOS).save(OUT / f"{name}.webp", "WEBP", quality=88, method=6)
+        small = im.resize((WIDTH, h), Image.LANCZOS)
+        alpha = small.getchannel("A")
+        rgb = ImageEnhance.Color(small.convert("RGB")).enhance(BUILDING_SATURATION)
+        r, g, b = rgb.split()
+        tinted = Image.merge("RGB", tuple(ch.point(lambda v, k=k: v * k / 255) for ch, k in zip((r, g, b), BUILDING_TINT)))
+        tinted.putalpha(alpha)
+        tinted.save(OUT / f"{name}.webp", "WEBP", quality=88, method=6)
         art.append({
             "key": name,
             "width": WIDTH,

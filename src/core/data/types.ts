@@ -68,13 +68,15 @@ export interface StreetData {
     projectile_radius: number;
     range: number;
     projectile_life_seconds: number;
+    /** マルチショットで扇に広げる 1 発ごとの角度 */
+    multishot_spread_deg: number;
   };
+  /** 粒を拾って上がる集客中のレベル。上がるたびにスキルを 3 択で選ぶ（skills.json） */
   street_level: {
     exp_thresholds: number[];
-    damage_per_level: number;
-    cooldown_multiplier_per_level: number;
-    extra_projectile_every_levels: number;
   };
+  /** スキル「ハートオービット」: 自機の周りを回るハート */
+  orbit: { radius: number; speed_deg: number; damage: number; orb_radius: number; hit_interval: number };
   spawn: {
     start_interval_seconds: number;
     min_interval_seconds: number;
@@ -98,7 +100,6 @@ export interface StreetData {
     min_alley: number;
     spawn_clear_radius: number;
     nav_cell: number;
-    nav_refresh_seconds: number;
   };
   /**
    * 地面 → 画面の写し（斜め見下ろし）: 画面 x = (x − y) × iso_x、画面 y = (x + y) × iso_y。
@@ -252,6 +253,28 @@ export interface RankData {
   letters: { letter: string; min: number }[];
 }
 
+/**
+ * 集客中のスキル（アーチャー伝説 2 のような軽い 3 択）。value の意味は kind ごと:
+ * multishot 弾 +value / diagonal 斜め ±value 度にも撃つ / rear 後ろにも撃つ / power 攻撃力 +value 割 /
+ * rapid 間隔 ×value / pierce 貫通 +value / speed 移動 +value 割 / max_hp 最大 HP +value（回復もする）/
+ * heal 最大 HP の value 割を回復（何度でも。減っているときだけ出る）/ magnet 吸い寄せ +value 割 / orbit ハート +value 個
+ */
+export type SkillKind = 'multishot' | 'diagonal' | 'rear' | 'power' | 'rapid' | 'pierce' | 'speed' | 'max_hp' | 'heal' | 'magnet' | 'orbit';
+export const SKILL_KINDS: readonly SkillKind[] = ['multishot', 'diagonal', 'rear', 'power', 'rapid', 'pierce', 'speed', 'max_hp', 'heal', 'magnet', 'orbit'];
+
+export interface SkillData {
+  id: string;
+  kind: SkillKind;
+  value: number;
+  max_level: number;
+  weight: number;
+}
+
+export interface SkillsData {
+  choices: number;
+  skills: SkillData[];
+}
+
 export type MissionKind = 'kills' | 'companions' | 'shift_sales' | 'goal_shifts' | 'champagne' | 'self_care' | 'vibe_match';
 export type MissionRewardKind = 'money' | 'mp_full' | 'ad_refill';
 export interface MissionReward {
@@ -295,6 +318,7 @@ export interface GameData {
   loginBonus: LoginBonusData;
   buildings: BuildingKindData[];
   missions: MissionData;
+  skills: SkillsData;
   regulars: RegularsData;
   ranking: RankingData;
   homes: HomeData[];

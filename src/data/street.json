@@ -27,7 +27,8 @@
     "projectile_speed": 640,
     "projectile_radius": 12,
     "range": 480,
-    "projectile_life_seconds": 0.9
+    "projectile_life_seconds": 0.9,
+    "multishot_spread_deg": 12
   },
   "street_level": {
     "exp_thresholds": [
@@ -38,11 +39,12 @@
       55,
       80,
       110,
-      150
-    ],
-    "damage_per_level": 3,
-    "cooldown_multiplier_per_level": 0.9,
-    "extra_projectile_every_levels": 3
+      150,
+      200,
+      260,
+      330,
+      410
+    ]
   },
   "spawn": {
     "start_interval_seconds": 1.0,
@@ -65,7 +67,6 @@
     "plaza_block_chance": 0.2,
     "spawn_clear_radius": 240,
     "nav_cell": 40,
-    "nav_refresh_seconds": 0.25,
     "landmark_block_chance": 0.25,
     "min_alley": 90
   },
@@ -74,5 +75,12 @@
     "iso_y": 0.406,
     "spawn_screen_half_w": 600,
     "spawn_screen_half_h": 880
+  },
+  "orbit": {
+    "radius": 95,
+    "speed_deg": 220,
+    "damage": 9,
+    "orb_radius": 18,
+    "hit_interval": 0.5
   }
 }

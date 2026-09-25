@@ -17,6 +17,7 @@ import regulars from '../src/data/regulars.json';
 import rivals from '../src/data/rivals.json';
 import selfCare from '../src/data/self_care.json';
 import service from '../src/data/service.json';
+import skills from '../src/data/skills.json';
 import street from '../src/data/street.json';
 import { createPlayer } from '../src/core/career/playerState';
 import { rankLetter, totalRankScore } from '../src/core/career/rank';
@@ -38,6 +39,7 @@ function rawData() {
     loginBonus,
     buildings: buildings.buildings,
     missions,
+    skills,
     regulars,
     ranking,
     homes: homes.homes,

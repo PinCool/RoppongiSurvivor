@@ -31,11 +31,12 @@ export interface City {
   roadHalf: number;
   blocks: Block[];
   buildings: Building[];
-  /** 区画ごとの建物（当たりの問い合わせを近所だけにする） */
-  byBlock: Map<string, Building[]>;
+  /** 区画ごとの建物（当たりの問い合わせを近所だけにする）。キーは blockKey の数値 */
+  byBlock: Map<number, Building[]>;
 }
 
-const blockKey = (bx: number, by: number) => `${bx},${by}`;
+/** 区画の添字 → 数値のキー（毎ティック敵ごとに引くので、文字列を作らない） */
+const blockKey = (bx: number, by: number) => (bx + 4096) * 8192 + (by + 4096);
 
 export function generateCity(cfg: StreetData, kinds: readonly BuildingKindData[], seed: number): City {
   const c = cfg.city;
@@ -47,7 +48,7 @@ export function generateCity(cfg: StreetData, kinds: readonly BuildingKindData[]
   const rh = c.road_half_width;
   const blocks: Block[] = [];
   const buildings: Building[] = [];
-  const byBlock = new Map<string, Building[]>();
+  const byBlock = new Map<number, Building[]>();
   const n = Math.ceil(half / pitch);
   let id = 0;
   for (let bx = -n; bx < n; bx++) {

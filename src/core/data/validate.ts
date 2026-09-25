@@ -1,5 +1,5 @@
 import type { GameData } from './types';
-import { STAT_IDS, VIBES } from './types';
+import { SKILL_KINDS, STAT_IDS, VIBES } from './types';
 import { checkShape, type Shape } from './shape';
 
 const N = 'number' as const;
@@ -35,14 +35,15 @@ const SHAPES: Record<keyof GameData, Shape> = {
     max_companions: N,
     world_half_size: N,
     player: { move_speed: N, radius: N, magnet_radius: N, pickup_radius: N, invincible_seconds: N },
-    weapon: { cooldown_seconds: N, damage: N, projectile_speed: N, projectile_radius: N, range: N, projectile_life_seconds: N },
-    street_level: { exp_thresholds: { array: N }, damage_per_level: N, cooldown_multiplier_per_level: N, extra_projectile_every_levels: N },
+    weapon: { cooldown_seconds: N, damage: N, projectile_speed: N, projectile_radius: N, range: N, projectile_life_seconds: N, multishot_spread_deg: N },
+    street_level: { exp_thresholds: { array: N } },
+    orbit: { radius: N, speed_deg: N, damage: N, orb_radius: N, hit_interval: N },
     spawn: { start_interval_seconds: N, min_interval_seconds: N, interval_decay_per_minute: N, max_alive: N },
     stage_scaling: { enemy_hp_per_stage: N, spawn_rate_per_stage: N },
     gem_magnet_speed: N,
     city: {
       pitch: N, road_half_width: N, lot_size: N, lot_margin: N, lot_gap: N,
-      empty_lot_chance: N, plaza_block_chance: N, landmark_block_chance: N, min_alley: N, spawn_clear_radius: N, nav_cell: N, nav_refresh_seconds: N,
+      empty_lot_chance: N, plaza_block_chance: N, landmark_block_chance: N, min_alley: N, spawn_clear_radius: N, nav_cell: N,
     },
     view: { iso_x: N, iso_y: N, spawn_screen_half_w: N, spawn_screen_half_h: N },
   },
@@ -81,6 +82,7 @@ const SHAPES: Record<keyof GameData, Shape> = {
     pool: { array: { id: S, kind: S, target: N, reward: { kind: S, amount: N } } },
     complete_all_reward: { kind: S, amount: N },
   },
+  skills: { choices: N, skills: { array: { id: S, kind: S, value: N, max_level: N, weight: N } } },
   regulars: { level_visits: { array: N }, success_bonus_per_level: N, wallet_bonus_per_level: N },
   ranking: {
     npcs: { array: { id: S, name_key: S, daily_min: N, daily_max: N } },
@@ -278,6 +280,17 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
     positive(x.target, `missions.pool[${i}].target`, errors);
   });
   if (!rewardKinds.includes(m.complete_all_reward.kind)) errors.push('missions.complete_all_reward.kind: 知らない種類');
+
+  uniqueIds(data.skills.skills, 'skills', errors);
+  if (!(data.skills.choices >= 1 && data.skills.choices <= data.skills.skills.length)) errors.push('skills.choices: 1〜スキルの数の外');
+  data.skills.skills.forEach((k, i) => {
+    if (!SKILL_KINDS.includes(k.kind)) errors.push(`skills[${i}].kind: 知らない種類 "${k.kind}"`);
+    if (!(k.max_level >= 1)) errors.push(`skills[${i}].max_level: 1 未満`);
+    positive(k.weight, `skills[${i}].weight`, errors);
+    if (k.kind === 'rapid' && !(k.value > 0 && k.value < 1)) errors.push(`skills[${i}]: rapid の value は 0〜1 の倍率`);
+  });
+  // 回復以外のスキルが 3 択を埋められるだけある（回復は減っているときしか出ない）
+  if (data.skills.skills.filter((k) => k.kind !== 'heal').length < data.skills.choices) errors.push('skills: 回復以外で 3 択を埋められない');
 
   ascending(data.regulars.level_visits, 'regulars.level_visits', errors);
   if (data.regulars.level_visits[0] !== undefined && data.regulars.level_visits[0] < 1) errors.push('regulars.level_visits: 1 回目より前');

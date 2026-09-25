@@ -68,6 +68,7 @@ describe('集客の街', () => {
     const sim = new StreetSim(data, { stageLevel: 5, hp: 9999, maxHp: 9999, mp: 100, maxMp: 100, seed: 11 });
     for (let i = 0; i < 60 * 90; i++) {
       if (sim.pendingEncounter) sim.resolveEncounter('skip');
+      if (sim.skillOffer) sim.chooseSkill(sim.skillOffer[0]!.id);
       sim.tick({ move: { x: Math.cos(i / 90), y: Math.sin(i / 70) } });
       if (sim.outcome) break;
     }
@@ -104,7 +105,7 @@ describe('路地', () => {
     data.street.spawn.max_alive = 0;
     // 自動攻撃で倒してしまうと届いたか分からないので、弾は当たっても削らない
     data.street.weapon.damage = 0;
-    data.street.street_level.damage_per_level = 0;
+    data.street.orbit.damage = 0;
     let found: { sim: StreetSim; spot: { x: number; y: number }; gap: number } | null = null;
     for (let seed = 1; seed < 40; seed++) {
       const sim = new StreetSim(data, { stageLevel: 1, hp: 100, maxHp: 100, mp: 100, maxMp: 100, seed });

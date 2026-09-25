@@ -55,6 +55,7 @@ describe('i18n のキー', () => {
     for (const m of data.missions.pool) keys.push(`mission.kind.${m.kind}`);
     for (const r of ['mp_full', 'ad_refill']) keys.push(`mission.reward.${r}`);
     for (const n of data.ranking.npcs) keys.push(n.name_key);
+    for (const k of data.skills.skills) keys.push(`skill.${k.id}.name`, `skill.${k.id}.icon`, `skill.${k.id}.desc`);
     for (const stat of [...STAT_IDS, 'hp', 'mp', 'drunk', 'exp']) keys.push(`stat.${stat}`);
     for (const hobby of data.hobbies) keys.push(`hobby.${hobby.id}`);
     for (let d = 0; d < 7; d++) keys.push(`weekday.${d}`);

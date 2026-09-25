@@ -16,6 +16,10 @@ export function playStreetSim(data: GameData, stageLevel: number, seed: number, 
   const sim = new StreetSim(data, { stageLevel, hp: 100, maxHp: 100, mp: 100, maxMp: 100, seed, rival });
   let guard = 0;
   while (!sim.outcome && guard++ < 60 * 400) {
+    if (sim.skillOffer) {
+      sim.chooseSkill(pickSkill(sim));
+      continue;
+    }
     if (sim.pendingEncounter) {
       const options = sim.choiceOptions();
       const ok = (c: string) => options.find((o) => o.choice === c)?.block === null;
@@ -60,4 +64,15 @@ function steer(sim: StreetSim): Vec2 {
   }
   if (!target && dx === 0 && dy === 0) return { x: Math.cos(sim.time * 0.5), y: Math.sin(sim.time * 0.5) };
   return normalize({ x: dx, y: dy });
+}
+
+/** ボットのスキルの選び方: 火力 → 範囲 → 守り の順。回復は HP が 6 割を切っていれば最優先 */
+const SKILL_PRIORITY = ['multishot', 'power', 'rapid', 'orbit', 'pierce', 'diagonal', 'max_hp', 'speed', 'magnet', 'rear', 'heal'];
+function pickSkill(sim: StreetSim): string {
+  const offer = sim.skillOffer!;
+  if (sim.player.hp < sim.player.maxHp * 0.6) {
+    const heal = offer.find((k) => k.kind === 'heal');
+    if (heal) return heal.id;
+  }
+  return [...offer].sort((a, b) => SKILL_PRIORITY.indexOf(a.kind) - SKILL_PRIORITY.indexOf(b.kind))[0]!.id;
 }

@@ -34,18 +34,33 @@ const waitScene = async (key) => {
   }
   throw new Error(`scene ${key} にならない（いま ${await activeScene()}）\n${errors.join("\n")}`);
 };
-/** 集客のシミュレーションを seconds 秒ぶん進める（遭遇は skip しない） */
-const fastForward = (seconds) =>
-  page.evaluate((sec) => {
+/** 集客のシミュレーションを seconds 秒ぶん進めて止まる（遭遇は skip しない）。レベルアップの 3 択で止まったら 'skill' */
+const fastForwardOnce = (end) =>
+  page.evaluate((endTime) => {
     const sim = window.__rs.game.scene.getScene('Street')._sim;
-    const end = sim.time + sec;
     // 撮影のために立ち止まって早送りするので、倒れないよう HP を保つ（ゲームの挙動は変えない）
-    while (sim.time < end && !sim.paused) {
+    while (sim.time < endTime && !sim.paused) {
       sim.player.hp = sim.player.maxHp;
       sim.tick({ move: { x: 0, y: 0 } });
     }
-    return sim.time;
-  }, seconds);
+    return sim.skillOffer ? 'skill' : sim.paused ? 'paused' : 'done';
+  }, end);
+let skillShotTaken = false;
+/** レベルアップの 3 択は本物の札をタップして選ぶ（札のタップも確かめる）。最初の 1 回は撮る */
+const fastForward = async (seconds) => {
+  const end = (await page.evaluate(() => window.__rs.game.scene.getScene('Street')._sim.time)) + seconds;
+  for (let guard = 0; guard < 40; guard++) {
+    const state = await fastForwardOnce(end);
+    if (state !== 'skill') return;
+    await wait(700); // 札が跳ねて出る・押し始めの受付待ち
+    if (!skillShotTaken) {
+      await shot('03b_skill_cards');
+      skillShotTaken = true;
+    }
+    await tap(360, 660); // 真ん中の札
+    await wait(500);
+  }
+};
 const companions = () => page.evaluate(() => window.__rs.game.scene.getScene('Street')._sim.companions.length);
 const teleport = (target) =>
   page.evaluate((what) => {

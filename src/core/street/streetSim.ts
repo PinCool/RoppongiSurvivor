@@ -1,4 +1,4 @@
-import type { CustomerData, EnemyData, GameData, RivalData, StreetData } from '../data/types';
+import type { CustomerData, EnemyData, GameData, RivalData, SkillData, SkillKind, StreetData } from '../data/types';
 import { Rng } from '../rng';
 import { circlesOverlap, clamp, clampLength1, distance, distanceSq, normalize, type Vec2 } from '../vec';
 import { blockedAt, generateCity, resolveCircle, type City } from './city';
@@ -86,6 +86,10 @@ export interface Projectile {
   radius: number;
   damage: number;
   life: number;
+  /** あと何体すり抜けられるか（スキル「貫通」） */
+  pierce: number;
+  /** もう当たった敵（貫通中に同じ敵へ 2 度当てない） */
+  hitIds: number[];
 }
 
 export interface Gem {
@@ -136,7 +140,9 @@ export type StreetEvent =
   | { type: 'goal_appeared'; pos: Vec2 }
   | { type: 'encounter'; uid: number }
   | { type: 'recruited'; uid: number; choice: RecruitChoice }
-  | { type: 'customer_stolen'; uid: number; pos: Vec2 };
+  | { type: 'customer_stolen'; uid: number; pos: Vec2 }
+  | { type: 'skill_offer'; options: string[] }
+  | { type: 'skill_chosen'; id: string; level: number };
 
 export type OutcomeKind = 'goal' | 'late' | 'down';
 
@@ -159,6 +165,8 @@ export class StreetSim {
   readonly companions: Companion[] = [];
   readonly rival: RivalBody | null;
   readonly city: City;
+  /** 取ったスキル（スキル id → レベル） */
+  readonly skills: Record<string, number> = {};
 
   private readonly _cfg: StreetData;
   private readonly _data: GameData;
@@ -169,8 +177,11 @@ export class StreetSim {
   private readonly _nav: NavGrid;
   /** 開始地点からの道のり。-1 のマスは閉じた中庭などで、誰も入れないので何も置かない */
   private readonly _reach: Int32Array;
-  /** 目的地のマス → 流れ場と作った時刻（自機へ・ライバルの狙い・ボットの行き先で使い回す） */
-  private readonly _fields = new Map<string, { field: Int32Array; at: number }>();
+  /**
+   * 目的地のマス → 流れ場（自機へ・ライバルの狙い・ボットの行き先で使い回す）。
+   * 街は変わらないので、同じマスへの流れ場はずっと使える。最近使った 32 個だけ持つ
+   */
+  private readonly _fields = new Map<number, Int32Array>();
   private _events: StreetEvent[] = [];
   private _time = 0;
   private _accumulator = 0;
@@ -184,6 +195,11 @@ export class StreetSim {
   private _streetExp = 0;
   private _streetLevel = 1;
   private _kills = 0;
+  private _pendingLevelUps = 0;
+  private _skillOffer: SkillData[] | null = null;
+  private _orbitAngle = 0;
+  /** ハートオービットが同じ敵に当たる間隔の管理（敵 uid → 次に当たれる時刻） */
+  private readonly _orbitNextHit = new Map<number, number>();
 
   constructor(data: GameData, params: StreetParams) {
     this._data = data;
@@ -259,7 +275,73 @@ export class StreetSim {
   }
 
   get paused(): boolean {
-    return this._pendingEncounter !== null || this._outcome !== null;
+    return this._pendingEncounter !== null || this._outcome !== null || this._skillOffer !== null;
+  }
+
+  /** レベルアップで出ているスキルの 3 択（無ければ null）。選ぶまで時間は止まる */
+  get skillOffer(): readonly SkillData[] | null {
+    return this._skillOffer;
+  }
+
+  /** スキルを選ぶ。出ている選択肢でなければ false。溜まったレベルアップがあれば続けて次の 3 択を出す */
+  chooseSkill(id: string): boolean {
+    const skill = this._skillOffer?.find((k) => k.id === id);
+    if (!skill) return false;
+    const level = (this.skills[id] ?? 0) + 1;
+    this.skills[id] = level;
+    if (skill.kind === 'max_hp') {
+      this.player.maxHp += skill.value;
+      this.player.hp += skill.value;
+    } else if (skill.kind === 'heal') {
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + Math.round(this.player.maxHp * skill.value));
+    }
+    this._events.push({ type: 'skill_chosen', id, level });
+    this._skillOffer = null;
+    this._pendingLevelUps = Math.max(0, this._pendingLevelUps - 1);
+    if (this._pendingLevelUps > 0) this.offerSkills();
+    return true;
+  }
+
+  /** ハートオービットのハートの位置（描画用。無ければ空） */
+  orbitPositions(): Vec2[] {
+    const n = this.skillAmount('orbit');
+    const o = this._cfg.orbit;
+    return Array.from({ length: n }, (_, k) => {
+      const a = this._orbitAngle + (k / n) * Math.PI * 2;
+      return { x: this.player.pos.x + Math.cos(a) * o.radius, y: this.player.pos.y + Math.sin(a) * o.radius };
+    });
+  }
+
+  /** その種類のスキルの合計（レベル × value）。orbit ならハートの数、power なら攻撃力の上乗せ割合 */
+  skillAmount(kind: SkillKind): number {
+    let sum = 0;
+    for (const k of this._data.skills.skills) if (k.kind === kind) sum += (this.skills[k.id] ?? 0) * k.value;
+    return sum;
+  }
+
+  private skillLevel(kind: SkillKind): number {
+    let sum = 0;
+    for (const k of this._data.skills.skills) if (k.kind === kind) sum += this.skills[k.id] ?? 0;
+    return sum;
+  }
+
+  /** 取れるスキル（上限に達していない・回復は減っているときだけ）から重みで choices 個 */
+  private offerSkills(): void {
+    const pool = this._data.skills.skills.filter(
+      (k) => (this.skills[k.id] ?? 0) < k.max_level && (k.kind !== 'heal' || this.player.hp < this.player.maxHp),
+    );
+    const options: SkillData[] = [];
+    while (options.length < this._data.skills.choices && pool.length > 0) {
+      const pick = this._rng.weighted(pool, (k) => k.weight);
+      options.push(pick);
+      pool.splice(pool.indexOf(pick), 1);
+    }
+    if (options.length === 0) {
+      this._pendingLevelUps = 0;
+      return;
+    }
+    this._skillOffer = options;
+    this._events.push({ type: 'skill_offer', options: options.map((k) => k.id) });
   }
 
   /** 前回から溜まったイベントを取り出す（描画側の演出用） */
@@ -298,6 +380,8 @@ export class StreetSim {
     this.applyContactDamage(dt);
     if (this._outcome) return;
     this.updateGems(dt);
+    if (this._skillOffer) return; // レベルアップの 3 択が出たら、この先（お客との遭遇など）は選んでから
+    this.updateOrbit(dt);
     this.updateCustomers(dt);
     if (this._pendingEncounter !== null) return;
     this.moveRival(dt);
@@ -429,7 +513,7 @@ export class StreetSim {
   }
 
   /**
-   * from から to へ向かう向き（建物を回り込む）。流れ場は目的地のマスごとに nav_refresh_seconds だけ使い回す。
+   * from から to へ向かう向き（建物を回り込む）。流れ場は目的地のマスごとに作って使い回す。
    * 近いときはまっすぐ。ボットや描画側からも呼べる
    */
   navigate(from: Vec2, to: Vec2): Vec2 {
@@ -444,14 +528,17 @@ export class StreetSim {
 
   private fieldFor(to: Vec2): Int32Array {
     const [i, j] = this._nav.cellOf(to);
-    const key = `${i},${j}`;
-    let entry = this._fields.get(key);
-    if (!entry || this._time - entry.at > this._cfg.city.nav_refresh_seconds) {
-      entry = { field: this._nav.flowTo(to), at: this._time };
-      this._fields.set(key, entry);
-      if (this._fields.size > 32) this._fields.delete(this._fields.keys().next().value as string);
+    const key = j * this._nav.size + i;
+    let field = this._fields.get(key);
+    if (field) {
+      // 最近使った順に並べ直す（Map は入れた順なので、消して入れ直す）
+      this._fields.delete(key);
+    } else {
+      field = this._nav.flowTo(to);
+      if (this._fields.size >= 32) this._fields.delete(this._fields.keys().next().value as number);
     }
-    return entry.field;
+    this._fields.set(key, field);
+    return field;
   }
 
   private spawnScheduledCustomers(): void {
@@ -487,8 +574,9 @@ export class StreetSim {
     this.player.moving = moving;
     if (moving) {
       this.player.facing = normalize(move);
-      this.player.pos.x += move.x * this._cfg.player.move_speed * dt;
-      this.player.pos.y += move.y * this._cfg.player.move_speed * dt;
+      const speed = this._cfg.player.move_speed * (1 + this.skillAmount('speed'));
+      this.player.pos.x += move.x * speed * dt;
+      this.player.pos.y += move.y * speed * dt;
       this.clampToWorld(this.player.pos, this.player.radius);
       resolveCircle(this.city, this.player.pos, this.player.radius);
     }
@@ -532,6 +620,7 @@ export class StreetSim {
   }
 
   private moveEnemies(dt: number): void {
+    if (this.enemies.length === 0) return;
     const target = this.player.pos;
     const field = this.fieldFor(target); // 全員が同じ流れ場を下る（1 ティックに 1 回だけ引く）
     for (const enemy of this.enemies) {
@@ -542,32 +631,48 @@ export class StreetSim {
     }
   }
 
-  private weaponStats(): { damage: number; cooldown: number; count: number } {
+  /** 武器の今の性能（取ったスキルで決まる） */
+  private weaponStats(): { damage: number; cooldown: number; count: number; pierce: number } {
     const w = this._cfg.weapon;
-    const lv = this._cfg.street_level;
-    const extra = this._streetLevel - 1;
+    const rapid = this._data.skills.skills.find((k) => k.kind === 'rapid');
     return {
-      damage: w.damage + lv.damage_per_level * extra,
-      cooldown: w.cooldown_seconds * Math.pow(lv.cooldown_multiplier_per_level, extra),
-      count: 1 + Math.floor(extra / Math.max(1, lv.extra_projectile_every_levels)),
+      damage: Math.round(w.damage * (1 + this.skillAmount('power'))),
+      cooldown: w.cooldown_seconds * Math.pow(rapid?.value ?? 1, this.skillLevel('rapid')),
+      count: 1 + Math.round(this.skillAmount('multishot')),
+      pierce: Math.round(this.skillAmount('pierce')),
     };
   }
 
+  /**
+   * いちばん近い敵へ撃つ。マルチショットは扇に広げ、ななめ撃ちは ±角度、バックショットは真後ろにも撃つ
+   * （アーチャー伝説の矢の足し方）
+   */
   private fireWeapon(dt: number): void {
     this._weaponTimer = Math.max(0, this._weaponTimer - dt);
     if (this._weaponTimer > 0) return;
     const w = this._cfg.weapon;
     const rangeSq = w.range * w.range;
-    const targets = this.enemies
-      .filter((e) => distanceSq(e.pos, this.player.pos) <= rangeSq)
-      .sort((a, b) => distanceSq(a.pos, this.player.pos) - distanceSq(b.pos, this.player.pos));
-    if (targets.length === 0) return;
+    let nearest: EnemyInstance | null = null;
+    let best = Infinity;
+    for (const e of this.enemies) {
+      const d = distanceSq(e.pos, this.player.pos);
+      if (d <= rangeSq && d < best) {
+        best = d;
+        nearest = e;
+      }
+    }
+    if (!nearest) return;
 
     const stats = this.weaponStats();
-    for (let i = 0; i < stats.count; i++) {
-      // 近い順に狙い、的が足りなければいちばん近い相手へ重ねて撃つ
-      const target = targets[i] ?? (targets[0] as EnemyInstance);
-      const dir = normalize({ x: target.pos.x - this.player.pos.x, y: target.pos.y - this.player.pos.y });
+    const aim = Math.atan2(nearest.pos.y - this.player.pos.y, nearest.pos.x - this.player.pos.x);
+    const rad = Math.PI / 180;
+    const angles: number[] = [];
+    for (let i = 0; i < stats.count; i++) angles.push(aim + (i - (stats.count - 1) / 2) * w.multishot_spread_deg * rad);
+    const diagonal = this._data.skills.skills.find((k) => k.kind === 'diagonal');
+    if (diagonal && this.skillLevel('diagonal') > 0) angles.push(aim + diagonal.value * rad, aim - diagonal.value * rad);
+    if (this.skillLevel('rear') > 0) angles.push(aim + Math.PI);
+    for (const a of angles) {
+      const dir = { x: Math.cos(a), y: Math.sin(a) };
       this.projectiles.push({
         uid: this.newUid(),
         pos: { ...this.player.pos },
@@ -575,6 +680,8 @@ export class StreetSim {
         radius: w.projectile_radius,
         damage: stats.damage,
         life: w.projectile_life_seconds,
+        pierce: stats.pierce,
+        hitIds: [],
       });
       this._events.push({ type: 'shot', pos: { ...this.player.pos }, dir });
     }
@@ -587,13 +694,36 @@ export class StreetSim {
       shot.pos.x += shot.vel.x * dt;
       shot.pos.y += shot.vel.y * dt;
       shot.life -= dt;
-      const hit = this.enemies.find((e) => circlesOverlap(shot.pos, shot.radius, e.pos, e.radius));
+      const hit = this.enemies.find((e) => !shot.hitIds.includes(e.uid) && circlesOverlap(shot.pos, shot.radius, e.pos, e.radius));
+      let spent = false;
       if (hit) {
-        hit.hp -= shot.damage;
-        this._events.push({ type: 'enemy_hit', uid: hit.uid, pos: { ...hit.pos }, damage: shot.damage });
-        if (hit.hp <= 0) this.killEnemy(hit);
+        shot.hitIds.push(hit.uid);
+        this.damageEnemy(hit, shot.damage);
+        if (shot.pierce > 0) shot.pierce--;
+        else spent = true;
       }
-      if (hit || shot.life <= 0 || blockedAt(this.city, shot.pos)) this.projectiles.splice(i, 1);
+      if (spent || shot.life <= 0 || blockedAt(this.city, shot.pos)) this.projectiles.splice(i, 1);
+    }
+  }
+
+  private damageEnemy(enemy: EnemyInstance, damage: number): void {
+    enemy.hp -= damage;
+    this._events.push({ type: 'enemy_hit', uid: enemy.uid, pos: { ...enemy.pos }, damage });
+    if (enemy.hp <= 0) this.killEnemy(enemy);
+  }
+
+  /** ハートオービット: 自機の周りを回り、触れた敵を hit_interval おきに削る */
+  private updateOrbit(dt: number): void {
+    const n = this.skillAmount('orbit');
+    if (n <= 0) return;
+    const o = this._cfg.orbit;
+    this._orbitAngle += o.speed_deg * (Math.PI / 180) * dt;
+    const orbs = this.orbitPositions();
+    for (const enemy of [...this.enemies]) {
+      if ((this._orbitNextHit.get(enemy.uid) ?? 0) > this._time) continue;
+      if (!orbs.some((orb) => circlesOverlap(orb, o.orb_radius, enemy.pos, enemy.radius))) continue;
+      this._orbitNextHit.set(enemy.uid, this._time + o.hit_interval);
+      this.damageEnemy(enemy, Math.round(o.damage * (1 + this.skillAmount('power'))));
     }
   }
 
@@ -618,7 +748,8 @@ export class StreetSim {
 
   private updateGems(dt: number): void {
     const p = this._cfg.player;
-    const magnetSq = p.magnet_radius * p.magnet_radius;
+    const magnet = p.magnet_radius * (1 + this.skillAmount('magnet'));
+    const magnetSq = magnet * magnet;
     for (let i = this.gems.length - 1; i >= 0; i--) {
       const gem = this.gems[i] as Gem;
       if (!gem.magnet && distanceSq(gem.pos, this.player.pos) <= magnetSq) gem.magnet = true;
@@ -642,8 +773,10 @@ export class StreetSim {
     const thresholds = this._cfg.street_level.exp_thresholds;
     while (this._streetLevel - 1 < thresholds.length && this._streetExp >= (thresholds[this._streetLevel - 1] as number)) {
       this._streetLevel++;
+      this._pendingLevelUps++;
       this._events.push({ type: 'street_level_up', level: this._streetLevel });
     }
+    if (this._pendingLevelUps > 0 && !this._skillOffer) this.offerSkills();
   }
 
   private updateCustomers(dt: number): void {

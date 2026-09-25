@@ -13,9 +13,18 @@ function quietData(): GameData {
   return data;
 }
 
+/** レベルアップの 3 択が出たら、いちばん左を選んで進める（段取りのテストではスキルの中身は問わない） */
+function autoSkill(sim: StreetSim): void {
+  if (sim.skillOffer) sim.chooseSkill(sim.skillOffer[0]!.id);
+}
+
 function runUntil(sim: StreetSim, seconds: number, input = STILL): void {
   const ticks = Math.round(seconds / FIXED_DT);
-  for (let i = 0; i < ticks && !sim.paused; i++) sim.tick(input);
+  for (let i = 0; i < ticks; i++) {
+    autoSkill(sim);
+    if (sim.paused) break;
+    sim.tick(input);
+  }
 }
 
 /** 遭遇で止まったら skip してでも時間を進める */
@@ -23,6 +32,7 @@ function runThrough(sim: StreetSim, seconds: number): void {
   const end = sim.time + seconds;
   while (sim.time < end - 1e-9 && !sim.outcome) {
     if (sim.pendingEncounter) sim.resolveEncounter('skip');
+    autoSkill(sim);
     sim.tick(STILL);
   }
 }
@@ -191,6 +201,7 @@ describe('戦闘', () => {
     let levelUps = 0;
     for (let i = 0; i < 60 * 45 && !sim.outcome; i++) {
       if (sim.pendingEncounter) sim.resolveEncounter('skip');
+      autoSkill(sim);
       sim.tick(STILL);
       for (const e of sim.drainEvents()) {
         if (e.type === 'gem_collected') collected += e.value;
@@ -206,12 +217,13 @@ describe('戦闘', () => {
   it('接触ダメージの後は無敵時間があり、HP が尽きると途中帰宅（同伴は失う）', () => {
     const data = freshData();
     data.street.weapon.damage = 0;
-    data.street.street_level.damage_per_level = 0;
+    data.street.orbit.damage = 0;
     const sim = new StreetSim(data, { ...PARAMS, hp: 30 });
     let hurts = 0;
     let lastHurtAt = -Infinity;
     for (let i = 0; i < 60 * 170 && !sim.outcome; i++) {
       if (sim.pendingEncounter) sim.resolveEncounter('skip');
+      autoSkill(sim);
       sim.tick(STILL);
       for (const e of sim.drainEvents()) {
         if (e.type === 'player_hurt') {
@@ -262,6 +274,7 @@ describe('ライバル（関門のステージ）', () => {
       sim.player.pos.x = -2000;
       sim.player.pos.y = -2000;
       if (sim.pendingEncounter) sim.resolveEncounter('skip');
+      autoSkill(sim);
       sim.tick(STILL);
       for (const e of sim.drainEvents()) if (e.type === 'customer_stolen') stolen.push(e.uid);
     }

@@ -55,7 +55,8 @@ describe('ライバル戦の難易度', () => {
   it('クリスタルの関門: 上手く動けば半分以上のお客は守れるが、ときどき横取りされる', () => {
     const data = freshData();
     const crystal = data.rivals.find((r) => r.id === 'crystal')!;
-    const runs = Array.from({ length: 12 }, (_, i) => playStreetSim(freshData(), crystal.gate_stage, 3000 + i));
+    // 横取りの数はお客の湧き位置で大きくぶれる（30 本ずつの窓で 1.4〜2.0）。12 本では乱数の並びが変わるだけで閾値をまたぐので 30 本
+    const runs = Array.from({ length: 30 }, (_, i) => playStreetSim(freshData(), crystal.gate_stage, 3000 + i));
     const companions = runs.reduce((s, r) => s + r.outcome!.companions.length, 0) / runs.length;
     const steals = runs.reduce((s, r) => s + r.rival!.steals, 0) / runs.length;
     expect(companions).toBeGreaterThanOrEqual(1.5); // 3 人中の半分。ボットでいまは 1.7〜1.8
