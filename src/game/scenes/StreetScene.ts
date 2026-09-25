@@ -4,6 +4,7 @@ import { spendAdRefill } from '../../core/career/work';
 import { byId } from '../../core/data/gameData';
 import { StreetSim, type ChoiceOption, type CustomerInstance, type RecruitChoice, type StreetEvent } from '../../core/street/streetSim';
 import type { Vec2 } from '../../core/vec';
+import { DEPTH, characterDepth } from '../depth';
 import { t } from '../i18n';
 import { session } from '../session';
 import { animKey, hasClip, idleFrame } from '../sprites';
@@ -29,6 +30,7 @@ export class StreetScene extends Phaser.Scene {
   private _player!: Phaser.GameObjects.Sprite;
   private _shots!: Phaser.GameObjects.Graphics;
   private _markers!: Phaser.GameObjects.Graphics;
+  private _arrows!: Phaser.GameObjects.Graphics;
   private _goal: Phaser.GameObjects.Container | null = null;
   private readonly _enemies = new Map<number, Phaser.GameObjects.Sprite>();
   private readonly _customers = new Map<number, Phaser.GameObjects.Sprite>();
@@ -66,10 +68,11 @@ export class StreetScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(300);
     this.makeGroundTexture();
-    this._ground = this.add.tileSprite(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 'street-ground').setScrollFactor(0).setDepth(-10);
+    this._ground = this.add.tileSprite(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 'street-ground').setScrollFactor(0).setDepth(DEPTH.ground);
     this.drawWorldEdge();
-    this._markers = this.add.graphics().setDepth(1);
-    this._shots = this.add.graphics().setDepth(600);
+    this._markers = this.add.graphics().setDepth(DEPTH.footMarks);
+    this._arrows = this.add.graphics().setDepth(DEPTH.offscreenArrows);
+    this._shots = this.add.graphics().setDepth(DEPTH.shots);
     this._player = this.add.sprite(0, 0, 'player').setOrigin(0.5, 0.92).setScale(CHARACTER_SCALE);
     this._player.play(animKey('player', 'idle'));
     this.cameras.main.startFollow(this._player, true, 0.15, 0.15);
@@ -133,7 +136,7 @@ export class StreetScene extends Phaser.Scene {
 
   private drawWorldEdge(): void {
     const half = session.data.street.world_half_size;
-    const g = this.add.graphics().setDepth(0);
+    const g = this.add.graphics().setDepth(DEPTH.worldEdge);
     g.lineStyle(10, COLOR.pink, 0.6);
     g.strokeRect(-half, -half, half * 2, half * 2);
   }
@@ -143,7 +146,7 @@ export class StreetScene extends Phaser.Scene {
   private syncPlayer(): void {
     const body = this._sim.player;
     this._player.setPosition(body.pos.x, body.pos.y);
-    this._player.setDepth(body.pos.y);
+    this._player.setDepth(characterDepth(body.pos.y));
     let clip = 'idle';
     if (body.moving) {
       const f = body.facing;
@@ -166,7 +169,7 @@ export class StreetScene extends Phaser.Scene {
         sprite.play({ key: animKey(enemy.visualId, 'walk'), startFrame: Phaser.Math.Between(0, 5) });
         this._enemies.set(enemy.uid, sprite);
       }
-      sprite.setPosition(enemy.pos.x, enemy.pos.y).setDepth(enemy.pos.y);
+      sprite.setPosition(enemy.pos.x, enemy.pos.y).setDepth(characterDepth(enemy.pos.y));
       sprite.setFlipX(enemy.pos.x > this._sim.player.pos.x);
     }
     for (const [uid, sprite] of this._enemies) {
@@ -196,7 +199,7 @@ export class StreetScene extends Phaser.Scene {
       const key = animKey(customer.visualId, clip);
       if (sprite.anims.currentAnim?.key !== key) sprite.play(key);
       if (walking) sprite.setFlipX(customer.wanderDir.x < 0);
-      sprite.setPosition(customer.pos.x, customer.pos.y).setDepth(customer.pos.y);
+      sprite.setPosition(customer.pos.x, customer.pos.y).setDepth(characterDepth(customer.pos.y));
     }
   }
 
@@ -241,7 +244,8 @@ export class StreetScene extends Phaser.Scene {
     const targets: { pos: Vec2; color: number }[] = this._sim.customers.filter((c) => c.state === 'wandering').map((c) => ({ pos: c.pos, color: COLOR.pink }));
     const goal = this._sim.goal;
     if (goal) targets.push({ pos: goal, color: COLOR.gold });
-    const g = this._markers;
+    const g = this._arrows;
+    g.clear();
     const cx = cam.scrollX + WIDTH / 2;
     const cy = cam.scrollY + HEIGHT / 2;
     const margin = 40;
@@ -276,7 +280,7 @@ export class StreetScene extends Phaser.Scene {
     sign.lineStyle(4, COLOR.white, 0.9);
     sign.strokeRoundedRect(-90, -170, 180, 70, 16);
     const label = this.add.text(0, -135, t('street.goal_label'), textStyle(32, CSS.text)).setOrigin(0.5);
-    this._goal = this.add.container(pos.x, pos.y, [glow, ring, sign, label]).setDepth(pos.y - 1);
+    this._goal = this.add.container(pos.x, pos.y, [glow, ring, sign, label]).setDepth(characterDepth(pos.y) - 1);
     this.tweens.add({ targets: glow, scale: 1.25, alpha: 0.05, duration: 700, yoyo: true, repeat: -1 });
   }
 
@@ -298,7 +302,7 @@ export class StreetScene extends Phaser.Scene {
         break;
       }
       case 'enemy_killed': {
-        const puff = this.add.circle(event.pos.x, event.pos.y - 30, 26, COLOR.pinkSoft, 0.7).setDepth(event.pos.y);
+        const puff = this.add.circle(event.pos.x, event.pos.y - 30, 26, COLOR.pinkSoft, 0.7).setDepth(characterDepth(event.pos.y));
         this.tweens.add({ targets: puff, scale: 2, alpha: 0, duration: 250, onComplete: () => puff.destroy() });
         break;
       }
@@ -324,16 +328,16 @@ export class StreetScene extends Phaser.Scene {
   // ---------- HUD ----------
 
   private drawHud(): void {
-    const g = this.add.graphics().setScrollFactor(0).setDepth(1500);
+    const g = this.add.graphics().setScrollFactor(0).setDepth(DEPTH.hud);
     g.fillStyle(COLOR.nightDeep, 0.72);
     g.fillRoundedRect(12, 12, WIDTH - 24, 150, 22);
-    this._timer = this.add.text(WIDTH / 2, 44, '', textStyle(48, CSS.text, { stroke: CSS.dark, strokeThickness: 6 })).setOrigin(0.5).setScrollFactor(0).setDepth(1501);
-    this._hp = new Gauge(this, 32, 86, 330, 28, t('stat.hp'), COLOR.hp).setScrollFactor(0).setDepth(1501);
-    this._mp = new Gauge(this, 32, 122, 330, 28, t('stat.mp'), COLOR.mp).setScrollFactor(0).setDepth(1501);
-    this._level = this.add.text(392, 84, '', textStyle(24, CSS.mint)).setScrollFactor(0).setDepth(1501);
-    this._expBar = this.add.graphics().setScrollFactor(0).setDepth(1501);
-    this._companionSlots = this.add.graphics().setScrollFactor(0).setDepth(1501);
-    this.add.text(500, 44, t('street.companions'), textStyle(22, CSS.pinkSoft)).setOrigin(0, 0.5).setScrollFactor(0).setDepth(1501);
+    this._timer = this.add.text(WIDTH / 2, 44, '', textStyle(48, CSS.text, { stroke: CSS.dark, strokeThickness: 6 })).setOrigin(0.5).setScrollFactor(0).setDepth(DEPTH.hud + 1);
+    this._hp = new Gauge(this, 32, 86, 330, 28, t('stat.hp'), COLOR.hp).setScrollFactor(0).setDepth(DEPTH.hud + 1);
+    this._mp = new Gauge(this, 32, 122, 330, 28, t('stat.mp'), COLOR.mp).setScrollFactor(0).setDepth(DEPTH.hud + 1);
+    this._level = this.add.text(392, 84, '', textStyle(24, CSS.mint)).setScrollFactor(0).setDepth(DEPTH.hud + 1);
+    this._expBar = this.add.graphics().setScrollFactor(0).setDepth(DEPTH.hud + 1);
+    this._companionSlots = this.add.graphics().setScrollFactor(0).setDepth(DEPTH.hud + 1);
+    this.add.text(500, 44, t('street.companions'), textStyle(22, CSS.pinkSoft)).setOrigin(0, 0.5).setScrollFactor(0).setDepth(DEPTH.hud + 1);
   }
 
   private updateHud(): void {

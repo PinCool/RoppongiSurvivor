@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import type { Vec2 } from '../../core/vec';
+import { DEPTH } from '../depth';
 import { COLOR } from '../theme';
 
 /**
@@ -17,8 +18,8 @@ export class VirtualStick {
   enabled = true;
 
   constructor(scene: Phaser.Scene) {
-    this._base = scene.add.circle(0, 0, this._radius, COLOR.white, 0.12).setStrokeStyle(4, COLOR.white, 0.4).setScrollFactor(0).setDepth(900).setVisible(false);
-    this._knob = scene.add.circle(0, 0, 38, COLOR.pinkSoft, 0.8).setScrollFactor(0).setDepth(901).setVisible(false);
+    this._base = scene.add.circle(0, 0, this._radius, COLOR.white, 0.12).setStrokeStyle(4, COLOR.white, 0.4).setScrollFactor(0).setDepth(DEPTH.hud + 50).setVisible(false);
+    this._knob = scene.add.circle(0, 0, 38, COLOR.pinkSoft, 0.8).setScrollFactor(0).setDepth(DEPTH.hud + 51).setVisible(false);
     const kb = scene.input.keyboard;
     this._keys = kb
       ? (kb.addKeys({ up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT', w: 'W', a: 'A', s: 'S', d: 'D' }) as VirtualStick['_keys'])

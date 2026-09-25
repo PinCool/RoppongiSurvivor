@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { DEPTH } from '../depth';
 import { COLOR, HEIGHT, WIDTH, textStyle } from '../theme';
 
 /** 画面中央に大きく出して消える告知（「お客さん出現！」など） */
@@ -7,7 +8,7 @@ export function banner(scene: Phaser.Scene, text: string, color: string, y = HEI
     .text(WIDTH / 2, y, text, textStyle(54, color, { stroke: '#1b1433', strokeThickness: 10, align: 'center' }))
     .setOrigin(0.5)
     .setScrollFactor(0)
-    .setDepth(1000)
+    .setDepth(DEPTH.hud + 10)
     .setScale(0.4)
     .setAlpha(0);
   scene.tweens.chain({
@@ -22,7 +23,7 @@ export function banner(scene: Phaser.Scene, text: string, color: string, y = HEI
 
 /** 画面全体を薄暗くして、その上にパネルを置く（モーダル）。戻り値の container を destroy すれば閉じる */
 export function modal(scene: Phaser.Scene, panelHeight: number, panelY = HEIGHT / 2): Phaser.GameObjects.Container {
-  const root = scene.add.container(0, 0).setScrollFactor(0).setDepth(2000);
+  const root = scene.add.container(0, 0).setScrollFactor(0).setDepth(DEPTH.hud + 100);
   const dim = scene.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6).setInteractive();
   const panel = scene.add.graphics();
   const w = WIDTH - 48;
@@ -49,7 +50,7 @@ export function pinToScreen(obj: Phaser.GameObjects.GameObject): void {
 
 /** 数字などを浮かせて消す（ダメージ・売上） */
 export function floatText(scene: Phaser.Scene, x: number, y: number, text: string, color: string, size = 26): void {
-  const label = scene.add.text(x, y, text, textStyle(size, color, { stroke: '#1b1433', strokeThickness: 5 })).setOrigin(0.5).setDepth(800);
+  const label = scene.add.text(x, y, text, textStyle(size, color, { stroke: '#1b1433', strokeThickness: 5 })).setOrigin(0.5).setDepth(DEPTH.shots + 1);
   scene.tweens.add({ targets: label, y: y - 50, alpha: 0, duration: 650, ease: 'Cubic.Out', onComplete: () => label.destroy() });
 }
 

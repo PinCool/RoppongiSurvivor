@@ -52,6 +52,10 @@ node tools/shot.mjs <出力先>           # 名前入力 → 自宅 → 集客 �
 npm run build                         # dist/ に静的ファイル（LINE ミニアプリ / LIFF に置く物）
 ```
 
+**外部からの確認は GitHub Pages**: https://create-riki.github.io/RoppongiSurvivor/ —— main に push すると
+`.github/workflows/pages.yml` が `npm run check` を通してから公開する（テストが落ちたら公開されない）。
+リポジトリは private でも**公開されたサイトは URL を知っていれば誰でも見られる**。
+
 **開発サーバでは `window.__rs = { game, session }` が生えている**（`src/main.ts`。本番ビルドには入らない）。
 `__rs.game.scene.getScene('Street')._sim` でシミュレーションを早送り・瞬間移動できる（shot.mjs が使っている）。
 
@@ -63,6 +67,9 @@ npm run build                         # dist/ に静的ファイル（LINE ミ�
   `clearTint().setTintMode(MULTIPLY)` —— モードを戻さないと白で塗られたままになる
 - **`wordWrap` は空白で切るので日本語が折り返されない** → `wrappedStyle()`（`theme.ts`。1 文字ずつ測る・行頭禁則あり）
 - **遷移の連打で `scene.start` が二重に積まれ、リザルトの精算が 2 回走った** → `fadeTo` は暗転中の 2 度目を無視する
+- **キャラの depth は足元の y をそのまま使うので、ワールドの y は負にもなる。** 地面を -10 にしていて、スタート地点より
+  上へ行ったキャラが地面の裏に隠れて消えた（2026-09-25 ユーザー報告「キャラクターが見えない」）→ 層はすべて `game/depth.ts` の
+  `DEPTH` で持ち、`tests/depth.test.ts` がワールドの端から端まで順番を見張る。**depth に生の数字を書かない**
 - 名前入力は Phaser の DOM 要素ではなく素の `<input>` を重ねる（スマホの IME をそのまま使うため。`NameScene`）
 
 ## 使わないもの（いまのところ）
