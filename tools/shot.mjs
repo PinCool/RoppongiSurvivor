@@ -92,7 +92,7 @@ if ((await companions()) !== 1) throw new Error(`同伴のボタンが効いて�
 
 await fastForward(30);
 if (await teleport('customer')) {
-  await wait(300);
+  await wait(500); // 選択肢は出てから 350ms は押し始めを受け付けない（誤タップ対策）
   await tap(360, 1280 / 2 + 40 - 450 + 430);
   await wait(300);
 }

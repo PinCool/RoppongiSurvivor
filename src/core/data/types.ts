@@ -98,8 +98,6 @@ export interface EnemyData {
   exp: number;
   from_seconds: number;
   weight: number;
-  /** 同じ絵の色違いにするときの乗算色（"#rrggbb"） */
-  tint?: string;
 }
 
 export interface CustomerData {

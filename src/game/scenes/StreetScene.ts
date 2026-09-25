@@ -20,6 +20,8 @@ const CHARACTER_SCALE = 0.72;
 const TILE = 512;
 /** ダメージ数字を同時に出す上限（連射で画面が数字で埋まらないように） */
 const MAX_DAMAGE_NUMBERS = 24;
+/** 遭遇の選択肢が出てから、押し始めを受け付けない時間（動かしていた指で誤って押さないように） */
+const ENCOUNTER_ARM_MS = 350;
 
 /**
  * 集客パートの描画。StreetSim を毎フレーム進め、その状態を写すだけ。
@@ -196,12 +198,6 @@ export class StreetScene extends Phaser.Scene {
       if (!sprite) {
         sprite = this.add.sprite(enemy.pos.x, enemy.pos.y, enemy.visualId).setOrigin(0.5, 0.92).setScale(CHARACTER_SCALE * (enemy.radius / 20));
         sprite.play({ key: animKey(enemy.visualId, 'walk'), startFrame: Phaser.Math.Between(0, 5) });
-        // 色違いの乗算色はスプライトに覚えさせる（命中の白フラッシュの後に戻すため。
-        // 命中と撃破が同じティックだと、シミュレーション側の敵はもう居ないので引けない）
-        const tint = byId(session.data.enemies, enemy.typeId).tint;
-        const color = tint ? Phaser.Display.Color.HexStringToColor(tint).color : null;
-        sprite.setData('tint', color);
-        if (color !== null) sprite.setTint(color);
         this._enemies.set(enemy.uid, sprite);
       }
       sprite.setPosition(enemy.pos.x, enemy.pos.y).setDepth(characterDepth(enemy.pos.y));
@@ -328,12 +324,7 @@ export class StreetScene extends Phaser.Scene {
         const sprite = this._enemies.get(event.uid);
         if (sprite) {
           sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-          this.time.delayedCall(60, () => {
-            if (!sprite.active) return;
-            sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
-            const color = sprite.getData('tint') as number | null;
-            if (color !== null) sprite.setTint(color);
-          });
+          this.time.delayedCall(60, () => sprite.active && sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
         }
         if (this._damageNumbers < MAX_DAMAGE_NUMBERS) {
           this._damageNumbers++;
@@ -472,6 +463,7 @@ export class StreetScene extends Phaser.Scene {
         fill: fills[option.choice],
         textColor: option.choice === 'companion' ? CSS.text : CSS.dark,
         sfx: null,
+        armMs: ENCOUNTER_ARM_MS,
         onClick: () => choose(option.choice),
       });
       buttons.set(option.choice, button);
@@ -495,6 +487,7 @@ export class StreetScene extends Phaser.Scene {
       textColor: CSS.dark,
       fontSize: 24,
       sfx: 'pickup_item',
+      armMs: ENCOUNTER_ARM_MS,
       onClick: () => {
         if (!spendAdRefill(p)) return;
         this._sim.refillMp();
@@ -513,6 +506,7 @@ export class StreetScene extends Phaser.Scene {
       fill: COLOR.panelLight,
       fontSize: 26,
       sfx: null,
+      armMs: ENCOUNTER_ARM_MS,
       onClick: () => choose('skip'),
     }));
     pinToScreen(root);

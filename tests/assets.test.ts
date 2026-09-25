@@ -39,6 +39,13 @@ describe('キャラの絵', () => {
     expect(files.sort()).toEqual(Object.keys(sheets).sort());
   });
 
+  it('同じ絵を 2 つの役に使わない（色違いで数を増やさない。2026-09-25 ユーザー指示「色味がダサすぎる AI っぽい」）', () => {
+    const data = freshData();
+    const used = [...data.enemies.map((e) => e.visual_id), ...data.customers.map((c) => c.visual_id), ...data.rivals.map((r) => r.visual_id), 'player'];
+    const dupes = used.filter((id, i) => used.indexOf(id) !== i);
+    expect(dupes).toEqual([]);
+  });
+
   it('ライバルは自機と同じ走りのクリップを持つ（集客で走り回るため）', () => {
     const table = sheets as Record<string, { clips: Record<string, unknown> }>;
     for (const r of freshData().rivals) {

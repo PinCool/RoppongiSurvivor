@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { sfx, type SfxId } from '../audio/sfx';
 import { COLOR, CSS, textStyle } from '../theme';
+import { TapGuard } from './tapGuard';
 
 export interface ButtonOptions {
   width: number;
@@ -13,10 +14,15 @@ export interface ButtonOptions {
   fontSize?: number;
   /** 押したときの音（既定は決定音。null で鳴らさない）。押せない状態で押すとエラー音 */
   sfx?: SfxId | null;
+  /** 出てからこの時間（ms）に押し始めたタップは受け付けない。急に出る選択肢で誤タップを防ぐ */
+  armMs?: number;
   onClick: () => void;
 }
 
-/** 角丸の押しボタン。押せない状態では灰色になり、sub に理由を出せる */
+/**
+ * 角丸の押しボタン。押せない状態では灰色になり、sub に理由を出せる。
+ * 反応するのは「このボタンの上で押して、上で離した」ときだけ（TapGuard）。
+ */
 export class Button extends Phaser.GameObjects.Container {
   private readonly _bg: Phaser.GameObjects.Graphics;
   private readonly _label: Phaser.GameObjects.Text;
@@ -44,11 +50,15 @@ export class Button extends Phaser.GameObjects.Container {
     if (this._sub) this.add(this._sub);
     this.setSize(opts.width, opts.height);
     this.setInteractive({ useHandCursor: true });
+    const guard = new TapGuard(scene.time.now, opts.armMs ?? 0);
     this.on('pointerdown', () => {
-      if (!this._enabled) return;
+      guard.down(scene.time.now);
+      if (!this._enabled || !guard.pressed) return;
       scene.tweens.add({ targets: this, scale: 0.95, duration: 60, yoyo: true });
     });
+    this.on('pointerout', () => guard.cancel());
     this.on('pointerup', () => {
+      if (!guard.up()) return;
       if (!this._enabled) {
         sfx.play('ui_error');
         return;

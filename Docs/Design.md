@@ -77,5 +77,6 @@ id も TokyoSurvivor の `sfx.json` のまま（命中 = `hit_penlight`、同伴
 
 `tools/import_tokyo_art.py` が TokyoSurvivor の `Art/Sprites/Characters` から縮小して焼く。**フード（Hood）とリーゼント（Regent）は
 TokyoSurvivor でもう使われていない古い絵なので取り込まない**（ユーザー指示「昔のアセットが紛れ込んでいるから完全削除」。表の `RETIRED`・
-`tests/assets.test.ts` が見張る）。酔っぱらいはサラリーマンの色違い（`enemies.json` の `tint`）、売れっ子デザイナーはキャッチの絵にした。
+`tests/assets.test.ts` が見張る）。売れっ子デザイナーはキャッチの絵にした。**色違いは作らない**（同日、酔っぱらいをサラリーマンの赤い色違いで出したら
+「色味がダサすぎる AI っぽいのでやめてほしい」—— 酔っぱらいごと外し、`tint` の仕組みも消した。1 つの絵は 1 つの役だけ。`tests/assets.test.ts`）。
 なお git の履歴（v0.1 のコミット）には 2 枚の PNG が残っている。

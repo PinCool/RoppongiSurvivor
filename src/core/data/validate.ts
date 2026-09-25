@@ -44,7 +44,6 @@ const SHAPES: Record<keyof GameData, Shape> = {
   enemies: {
     array: {
       id: S, name_key: S, visual_id: S, max_hp: N, move_speed: N, radius: N, contact_damage: N, exp: N, from_seconds: N, weight: N,
-      tint: { optional: S },
     },
   },
   customers: {
@@ -216,10 +215,6 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
   data.loginBonus.cycle.forEach((r, i) => {
     if (!['money', 'hp_full', 'mp_full'].includes(r.kind)) errors.push(`login_bonus.cycle[${i}].kind: 知らない種類 "${r.kind}"`);
     if (r.kind === 'money' && !(r.amount > 0)) errors.push(`login_bonus.cycle[${i}].amount: お金は正の額`);
-  });
-
-  data.enemies.forEach((e, i) => {
-    if (e.tint !== undefined && !/^#[0-9a-fA-F]{6}$/.test(e.tint)) errors.push(`enemies[${i}].tint: "#rrggbb" でない`);
   });
 
   const rt = p.realtime;
