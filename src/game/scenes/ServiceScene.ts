@@ -7,7 +7,7 @@ import { sfx } from '../audio/sfx';
 import { t, yen } from '../i18n';
 import { session } from '../session';
 import { animKey, hasClip, idleFrame } from '../sprites';
-import { COLOR, CSS, HEIGHT, WIDTH, textStyle, wrappedStyle } from '../theme';
+import { BUTTON, COLOR, CSS, HEIGHT, WIDTH, drawPanel, textStyle, titleStyle, wrappedStyle, type ButtonVariant } from '../theme';
 import { Button } from '../ui/Button';
 import { banner, fadeTo, floatText } from '../ui/fx';
 import { Gauge } from '../ui/Gauge';
@@ -46,11 +46,11 @@ export class ServiceScene extends Phaser.Scene {
       p.seed ^ 0x5bd1e995,
     );
 
-    this.cameras.main.fadeIn(300);
+    this.cameras.main.fadeIn(300, 255, 227, 240);
     this.drawClub();
     this._guestSprite = this.add.sprite(WIDTH / 2, 380, 'bandman').setOrigin(0.5, 1).setScale(1.9);
-    this._guestName = this.add.text(30, 30, '', textStyle(30, CSS.pinkSoft, { stroke: CSS.dark, strokeThickness: 6 }));
-    this._counter = this.add.text(WIDTH - 30, 30, '', textStyle(24, CSS.sub)).setOrigin(1, 0);
+    this._guestName = this.add.text(30, 30, '', titleStyle(30));
+    this._counter = this.add.text(WIDTH - 30, 34, '', titleStyle(24, '#9b6bff')).setOrigin(1, 0);
     this.drawBubble();
     this._tags = this.add.container(0, 0);
     this._actions = this.add.container(0, 0);
@@ -60,43 +60,48 @@ export class ServiceScene extends Phaser.Scene {
 
   private drawClub(): void {
     const g = this.add.graphics();
-    g.fillGradientStyle(0x3a1d5c, 0x3a1d5c, 0x160f2b, 0x160f2b, 1);
-    g.fillRect(0, 0, WIDTH, HEIGHT);
-    // 奥のソファとシャンデリアの光
-    g.fillStyle(0x6b2d6f, 1);
-    g.fillRoundedRect(60, 250, WIDTH - 120, 150, 40);
-    g.fillStyle(0x8a3b86, 1);
-    g.fillRoundedRect(40, 320, WIDTH - 80, 90, 30);
+    // 壁（ピンクのストライプ）
+    g.fillStyle(0xffd6e8, 1);
+    g.fillRect(0, 0, WIDTH, ACTION_TOP);
+    g.fillStyle(0xffc4dd, 1);
+    for (let x = 0; x < WIDTH; x += 60) g.fillRect(x, 0, 30, ACTION_TOP);
+    // 奥のソファ（ラベンダー）とシャンデリア（金の粒）
+    g.fillStyle(0xb99cf0, 1);
+    g.fillRoundedRect(60, 250, WIDTH - 120, 150, 50);
+    g.fillStyle(0xcdb6ff, 1);
+    g.fillRoundedRect(40, 320, WIDTH - 80, 90, 40);
     for (let i = 0; i < 7; i++) {
-      g.fillStyle(COLOR.gold, 0.12);
-      g.fillCircle(80 + i * 95, 130, 38);
-      g.fillStyle(COLOR.gold, 0.8);
-      g.fillCircle(80 + i * 95, 130, 5);
+      g.fillStyle(0xffffff, 0.8);
+      g.fillCircle(80 + i * 95, 120, 14);
+      g.fillStyle(0xffd45c, 1);
+      g.fillCircle(80 + i * 95, 120, 8);
     }
-    g.fillStyle(0x000000, 0.25);
+    // 下半分は床（クリーム）
+    g.fillStyle(0xfff4e6, 1);
     g.fillRect(0, ACTION_TOP - 40, WIDTH, HEIGHT - ACTION_TOP + 40);
   }
 
   private drawBubble(): void {
     const g = this.add.graphics();
-    g.fillStyle(0xffffff, 0.96);
-    g.fillRoundedRect(36, BUBBLE_Y - 70, WIDTH - 72, 150, 26);
-    g.fillTriangle(WIDTH / 2 - 20, BUBBLE_Y - 70, WIDTH / 2 + 20, BUBBLE_Y - 70, WIDTH / 2, BUBBLE_Y - 96);
+    drawPanel(g, 30, BUBBLE_Y - 76, WIDTH - 60, 162, 36);
+    g.fillStyle(COLOR.frame, 1);
+    g.fillTriangle(WIDTH / 2 - 24, BUBBLE_Y - 72, WIDTH / 2 + 24, BUBBLE_Y - 72, WIDTH / 2, BUBBLE_Y - 102);
+    g.fillStyle(COLOR.surface, 1);
+    g.fillTriangle(WIDTH / 2 - 16, BUBBLE_Y - 68, WIDTH / 2 + 16, BUBBLE_Y - 68, WIDTH / 2, BUBBLE_Y - 92);
     this._bubble = this.add
-      .text(WIDTH / 2, BUBBLE_Y + 5, '', wrappedStyle(28, CSS.dark, WIDTH - 120, { align: 'center', lineSpacing: 6 }))
+      .text(WIDTH / 2, BUBBLE_Y + 5, '', wrappedStyle(28, CSS.text, WIDTH - 120, { align: 'center', lineSpacing: 6 }))
       .setOrigin(0.5);
   }
 
   private drawFooter(): void {
     const g = this.add.graphics();
-    g.fillStyle(COLOR.nightDeep, 0.9);
-    g.fillRoundedRect(12, HEIGHT - 120, WIDTH - 24, 108, 22);
+    drawPanel(g, 10, HEIGHT - 126, WIDTH - 20, 116, 28);
     const me = this.add.sprite(80, HEIGHT - 16, 'player', idleFrame('player')).setOrigin(0.5, 1).setScale(0.75);
     me.play(animKey('player', 'idle'));
     this.add.text(150, HEIGHT - 104, session.player.genjiName, textStyle(24, CSS.text));
     this._mp = new Gauge(this, 150, HEIGHT - 66, 300, 28, t('stat.mp'), COLOR.mp);
     this.add.text(WIDTH - 36, HEIGHT - 104, t('service.sales'), textStyle(22, CSS.sub)).setOrigin(1, 0);
-    this._sales = this.add.text(WIDTH - 36, HEIGHT - 70, '', textStyle(34, CSS.gold)).setOrigin(1, 0);
+    this._sales = this.add.text(WIDTH - 36, HEIGHT - 70, '', textStyle(34, CSS.money)).setOrigin(1, 0);
     this.refreshFooter();
   }
 
@@ -131,16 +136,15 @@ export class ServiceScene extends Phaser.Scene {
 
   private showVibeChoices(): void {
     this._actions.removeAll(true);
-    this._actions.add(this.add.text(WIDTH / 2, ACTION_TOP, t('service.vibe_prompt'), textStyle(28, CSS.sub)).setOrigin(0.5));
-    const fills: Record<Vibe, number> = { wild: COLOR.pink, fun: COLOR.gold, calm: COLOR.cyan };
+    this._actions.add(this.add.text(WIDTH / 2, ACTION_TOP, t('service.vibe_prompt'), titleStyle(30)).setOrigin(0.5));
+    const variants: Record<Vibe, ButtonVariant> = { wild: 'primary', fun: 'yellow', calm: 'secondary' };
     VIBES.forEach((vibe, i) => {
       this._actions.add(
         new Button(this, WIDTH / 2, ACTION_TOP + 90 + i * 124, {
           width: WIDTH - 100,
           height: 108,
           label: t(`service.vibe.${vibe}`),
-          fill: fills[vibe],
-          textColor: vibe === 'wild' ? CSS.text : CSS.dark,
+          variant: variants[vibe],
           fontSize: 36,
           sfx: null,
           onClick: () => this.chooseVibe(vibe),
@@ -171,10 +175,13 @@ export class ServiceScene extends Phaser.Scene {
           : tag.kind === 'hobby'
             ? t('service.tag.hobby', { hobby: t(`hobby.${tag.hobbyId}`) })
             : t(`service.tag.${tag.kind}`);
-      const text = this.add.text(0, 0, label, textStyle(22, good ? CSS.dark : CSS.text)).setOrigin(0, 0.5);
+      const colors = good ? BUTTON.mint : BUTTON.primary;
+      const text = this.add.text(0, 0, label, textStyle(22, '#ffffff', { stroke: colors.stroke, strokeThickness: 4 })).setOrigin(0, 0.5);
       const w = text.width + 28;
       const bg = this.add.graphics();
-      bg.fillStyle(good ? COLOR.mint : COLOR.red, 1);
+      bg.fillStyle(colors.shade, 1);
+      bg.fillRoundedRect(0, -16, w, 40, 20);
+      bg.fillStyle(colors.face, 1);
       bg.fillRoundedRect(0, -20, w, 40, 20);
       text.setX(14);
       const chip = this.add.container(x, 610, [bg, text]).setAlpha(0).setScale(0.6);
@@ -199,7 +206,7 @@ export class ServiceScene extends Phaser.Scene {
         height: rowH,
         label: t(d.name_key),
         sub: t('service.drink_sub', { price: yen(d.price), mp: d.mp_cost }),
-        fill: COLOR.panelLight,
+        variant: 'secondary',
         fontSize: 28,
         sfx: null,
         onClick: () => this.order(d.id),
@@ -213,8 +220,7 @@ export class ServiceScene extends Phaser.Scene {
         width: 400,
         height: 76,
         label: this.nextLabel(),
-        fill: COLOR.lavender,
-        textColor: CSS.dark,
+        variant: 'quiet',
         fontSize: 28,
         onClick: () => this.nextGuest(),
       }),
@@ -232,9 +238,9 @@ export class ServiceScene extends Phaser.Scene {
     this.say(t(result.reactionKey, { drink: t(drink.name_key), name: session.player.genjiName }));
     sfx.play(result.guestLeft ? 'recruit_fail' : result.success ? 'shop_request_ok' : 'shop_request_fail');
     if (result.success) {
-      floatText(this, WIDTH / 2, 300, `+${yen(result.price)}`, CSS.gold, 44);
+      floatText(this, WIDTH / 2, 300, `+${yen(result.price)}`, CSS.money, 44);
       if (result.price >= 30000) {
-        banner(this, t('service.big_order', { drink: t(drink.name_key) }), CSS.gold, 220);
+        banner(this, t('service.big_order', { drink: t(drink.name_key) }), CSS.accent, 220);
         this.cameras.main.flash(250, 255, 215, 100, false);
       }
     } else {
@@ -249,8 +255,7 @@ export class ServiceScene extends Phaser.Scene {
           width: 420,
           height: 100,
           label: this.nextLabel(),
-          fill: COLOR.lavender,
-          textColor: CSS.dark,
+          variant: 'mint',
           onClick: () => this.nextGuest(),
         }),
       );

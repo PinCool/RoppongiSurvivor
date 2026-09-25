@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { t } from '../i18n';
 import { session } from '../session';
 import { clearSave } from '../storage';
-import { CSS, HEIGHT, WIDTH, textStyle, wrappedStyle } from '../theme';
+import { CSS, HEIGHT, WIDTH, drawBackdrop, titleStyle, wrappedStyle } from '../theme';
 import { Button } from '../ui/Button';
 import { fadeTo } from '../ui/fx';
 
@@ -13,9 +13,9 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.fadeIn(600);
-    this.cameras.main.setBackgroundColor(0x0c0818);
-    this.add.text(WIDTH / 2, HEIGHT * 0.35, t('game_over.title'), textStyle(52, CSS.red, { align: 'center' })).setOrigin(0.5);
+    this.cameras.main.fadeIn(600, 255, 227, 240);
+    drawBackdrop(this);
+    this.add.text(WIDTH / 2, HEIGHT * 0.35, t('game_over.title'), titleStyle(50, '#9b6bff', { align: 'center' })).setOrigin(0.5);
     this.add
       .text(WIDTH / 2, HEIGHT * 0.47, t('game_over.body', { name: session.player.genjiName }), wrappedStyle(28, CSS.sub, 600, { align: 'center', lineSpacing: 10 }))
       .setOrigin(0.5);

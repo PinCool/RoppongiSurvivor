@@ -14,7 +14,7 @@ import { STAT_IDS, type SelfCareData, type StatId } from '../../core/data/types'
 import { sfx } from '../audio/sfx';
 import { t, yen } from '../i18n';
 import { session, todayKey } from '../session';
-import { COLOR, CSS, HEIGHT, WIDTH, textStyle, wrappedStyle } from '../theme';
+import { COLOR, CSS, HEIGHT, WIDTH, drawBackdrop, drawPanel, drawRibbon, textStyle, titleStyle, wrappedStyle } from '../theme';
 import { Button } from '../ui/Button';
 import { banner, fadeTo, modal } from '../ui/fx';
 import { Gauge } from '../ui/Gauge';
@@ -50,8 +50,8 @@ export class HomeScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.fadeIn(300);
-    this.cameras.main.setBackgroundColor(COLOR.night);
+    this.cameras.main.fadeIn(300, 255, 227, 240);
+    drawBackdrop(this);
     const room = this.add.image(WIDTH / 2, ROOM_TOP, 'room').setOrigin(0.5, 0);
     // くつろいでいる感じを出す、ごく小さな呼吸
     this.tweens.add({ targets: room, scaleY: 1.006, duration: 2200, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
@@ -82,16 +82,19 @@ export class HomeScene extends Phaser.Scene {
   }
 
   private drawTopBar(): void {
+    // 上の帯: 白い地に丸いチップ（日付・お金）
     const g = this.add.graphics();
-    g.fillStyle(COLOR.nightDeep, 1);
+    g.fillStyle(COLOR.surface, 1);
     g.fillRect(0, 0, WIDTH, ROOM_TOP);
-    g.fillStyle(COLOR.pink, 1);
-    g.fillRect(0, ROOM_TOP - 4, WIDTH, 4);
-    this._dateText = this.add.text(24, 20, '', textStyle(30, CSS.text));
-    this._moneyText = this.add.text(WIDTH - 24, 16, '', textStyle(30, CSS.gold)).setOrigin(1, 0);
-    this._rankText = this.add.text(24, 58, '', textStyle(20, CSS.pinkSoft));
+    g.fillStyle(COLOR.frame, 1);
+    g.fillRect(0, ROOM_TOP - 6, WIDTH, 6);
+    g.fillStyle(COLOR.surfaceAlt, 1);
+    g.fillRoundedRect(WIDTH - 250, 12, 234, 44, 22);
+    this._dateText = this.add.text(24, 16, '', textStyle(30, CSS.text));
+    this._moneyText = this.add.text(WIDTH - 32, 34, '', textStyle(30, CSS.money)).setOrigin(1, 0.5);
+    this._rankText = this.add.text(24, 56, '', textStyle(20, CSS.sub));
     this._soundText = this.add
-      .text(WIDTH - 24, 58, '', textStyle(20, CSS.sub))
+      .text(WIDTH - 24, 62, '', textStyle(18, CSS.sub))
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .on('pointerup', () => {
@@ -103,25 +106,23 @@ export class HomeScene extends Phaser.Scene {
 
   private drawNamePlate(): void {
     const plate = this.add.graphics();
-    plate.fillStyle(COLOR.nightDeep, 0.75);
-    plate.fillRoundedRect(16, ROOM_TOP + 16, 330, 64, 20);
-    this._nameText = this.add.text(36, ROOM_TOP + 48, '', textStyle(28, CSS.text)).setOrigin(0, 0.5);
+    drawRibbon(plate, 186, ROOM_TOP + 48, 330, 60);
+    this._nameText = this.add.text(186, ROOM_TOP + 46, '', titleStyle(28, '#e0508b')).setOrigin(0.5);
     // 関門のステージだけ、ライバルの札を右上に出す
     this._rivalText = this.add
-      .text(WIDTH - 24, ROOM_TOP + 30, '', wrappedStyle(22, CSS.text, 330, { backgroundColor: '#5b2a86', padding: { x: 14, y: 10 }, align: 'center' }))
+      .text(WIDTH - 24, ROOM_TOP + 30, '', wrappedStyle(22, '#ffffff', 330, { backgroundColor: '#9b6bff', padding: { x: 16, y: 12 }, align: 'center' }))
       .setOrigin(1, 0);
   }
 
   private drawStatusPanel(): void {
     const top = ROOM_TOP + 706 - 70;
     const g = this.add.graphics();
-    g.fillStyle(COLOR.panel, 0.94);
-    g.fillRoundedRect(16, top, WIDTH - 32, 250, 26);
+    drawPanel(g, 12, top, WIDTH - 24, 250);
     const x = 40;
     this._hp = new Gauge(this, x, top + 22, 400, 30, t('stat.hp'), COLOR.hp);
     this._mp = new Gauge(this, x, top + 64, 400, 30, t('stat.mp'), COLOR.mp);
     this._drunk = new Gauge(this, x, top + 106, 400, 30, t('stat.drunk'), COLOR.drunk);
-    this._exp = new Gauge(this, x, top + 148, 400, 30, t('stat.exp'), COLOR.mint);
+    this._exp = new Gauge(this, x, top + 148, 400, 30, t('stat.exp'), COLOR.exp);
     this._statsText = this.add.text(462, top + 22, '', textStyle(24, CSS.text, { lineSpacing: 12 }));
   }
 
@@ -137,19 +138,18 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => fadeTo(this, 'Street'),
     });
     const small = { width: 214, height: 96, fontSize: 26 };
-    this._care = new Button(this, 24 + 107, y + 136, { ...small, label: t('home.self_care'), sub: '', fill: COLOR.lavender, textColor: CSS.dark, onClick: () => this.openSelfCare() });
-    this._sleep = new Button(this, WIDTH / 2, y + 136, { ...small, label: t('home.sleep'), sub: '', fill: COLOR.panelLight, onClick: () => this.sleep() });
+    this._care = new Button(this, 24 + 107, y + 136, { ...small, label: t('home.self_care'), sub: '', variant: 'mint', onClick: () => this.openSelfCare() });
+    this._sleep = new Button(this, WIDTH / 2, y + 136, { ...small, label: t('home.sleep'), sub: '', variant: 'secondary', onClick: () => this.sleep() });
     this._ad = new Button(this, WIDTH - 24 - 107, y + 136, {
       ...small,
       label: t('home.ad_refill'),
       sub: '',
-      fill: COLOR.cyan,
-      textColor: CSS.dark,
+      variant: 'yellow',
       sfx: 'pickup_item',
       onClick: () => {
         if (useAdRefill(session.player)) {
           session.save();
-          banner(this, t('home.ad_refilled'), CSS.cyan);
+          banner(this, t('home.ad_refilled'), '#4f8fd6');
           this.refresh();
         }
       },
@@ -161,7 +161,7 @@ export class HomeScene extends Phaser.Scene {
     const data = session.data;
     const d = dateOf(p.day, data.calendar);
     this._dateText.setText(t('home.date', { month: d.month, week: d.week, weekday: t(`weekday.${d.weekday}`) }));
-    this._moneyText.setText(yen(p.money)).setColor(p.money < 0 ? CSS.red : CSS.gold);
+    this._moneyText.setText(yen(p.money)).setColor(p.money < 0 ? CSS.bad : CSS.money);
     const score = totalRankScore(p, data);
     this._rankText.setText(t('home.rank', { letter: rankLetter(score, data), score: score.toLocaleString('ja-JP') }));
     this._soundText.setText(t(sfx.muted ? 'home.sound_off' : 'home.sound_on')).setVisible(sfx.available);
@@ -214,7 +214,7 @@ export class HomeScene extends Phaser.Scene {
     }
     const next = () => login && this.showLoginBonus(login);
     if (lines.length === 1) {
-      banner(this, lines[0] as string, CSS.pinkSoft);
+      banner(this, lines[0] as string, CSS.titleStroke);
       if (login) this.time.delayedCall(900, next);
       return;
     }
@@ -226,7 +226,10 @@ export class HomeScene extends Phaser.Scene {
   private showLoginBonus(reward: LoginReward): void {
     sfx.play('activity_clear');
     const root = modal(this, 440);
-    root.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 140, t('login.title', { streak: reward.streak }), textStyle(36, CSS.gold)).setOrigin(0.5));
+    const ribbon = this.add.graphics();
+    drawRibbon(ribbon, WIDTH / 2, HEIGHT / 2 - 220, 460, 72);
+    root.add(ribbon);
+    root.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 222, t('login.title', { streak: reward.streak }), titleStyle(34, '#e0508b')).setOrigin(0.5));
     const body = reward.kind === 'money' ? t('login.money', { amount: yen(reward.amount) }) : t(`login.${reward.kind}`);
     root.add(this.add.text(WIDTH / 2, HEIGHT / 2 - 30, body, wrappedStyle(34, CSS.text, 600, { align: 'center' })).setOrigin(0.5));
     root.add(new Button(this, WIDTH / 2, HEIGHT / 2 + 120, { width: 300, height: 90, label: t('login.receive'), onClick: () => { root.destroy(); this.refresh(); } }));
@@ -235,7 +238,7 @@ export class HomeScene extends Phaser.Scene {
   private openSelfCare(): void {
     const root = modal(this, HEIGHT - 120);
     const top = 60;
-    const title = this.add.text(WIDTH / 2, top + 50, '', textStyle(32, CSS.text)).setOrigin(0.5);
+    const title = this.add.text(WIDTH / 2, top + 50, '', titleStyle(30)).setOrigin(0.5);
     root.add(title);
     const list = this.add.container(0, 0);
     root.add(list);
@@ -247,7 +250,7 @@ export class HomeScene extends Phaser.Scene {
         height: 70,
         label: t(`stat.${stat}`),
         fontSize: 26,
-        fill: COLOR.panelLight,
+        variant: 'secondary',
         sfx: 'ui_select',
         onClick: () => {
           category = stat;
@@ -272,7 +275,7 @@ export class HomeScene extends Phaser.Scene {
       width: 320,
       height: 90,
       label: t('common.close'),
-      fill: COLOR.panelLight,
+      variant: 'quiet',
       sfx: 'ui_cancel',
       onClick: () => {
         root.destroy();
@@ -286,16 +289,16 @@ export class HomeScene extends Phaser.Scene {
     const p = session.player;
     const row = this.add.container(0, y);
     const bg = this.add.graphics();
-    bg.fillStyle(COLOR.nightDeep, 0.7);
-    bg.fillRoundedRect(48, 0, WIDTH - 96, 112, 18);
+    bg.fillStyle(COLOR.surfaceAlt, 1);
+    bg.fillRoundedRect(48, 0, WIDTH - 96, 112, 22);
     row.add(bg);
     row.add(this.add.text(70, 12, t(item.name_key), textStyle(26, CSS.text)));
     const effects = [
       ...Object.entries(item.gains).map(([stat, v]) => t('self_care.gain', { name: t(`stat.${stat}`), value: v })),
       ...Object.entries(item.hobbies).map(([hobby, v]) => t('self_care.gain', { name: t(`hobby.${hobby}`), value: v })),
     ];
-    row.add(this.add.text(70, 48, effects.join('  '), textStyle(20, CSS.mint)));
-    row.add(this.add.text(70, 78, `${yen(item.cost)}  ${this.kindLabel(item)}`, textStyle(20, CSS.gold)));
+    row.add(this.add.text(70, 48, effects.join('  '), textStyle(20, CSS.good)));
+    row.add(this.add.text(70, 78, `${yen(item.cost)}  ${this.kindLabel(item)}`, textStyle(20, CSS.money)));
 
     const subscribed = item.kind === 'subscription' && p.subscriptions.includes(item.id);
     if (subscribed) {
@@ -305,7 +308,7 @@ export class HomeScene extends Phaser.Scene {
         label: t('self_care.cancel'),
         sub: t('self_care.subscribed'),
         fontSize: 24,
-        fill: COLOR.panelLight,
+        variant: 'quiet',
         sfx: 'ui_cancel',
         onClick: () => {
           cancelSubscription(p, item.id);
@@ -326,7 +329,7 @@ export class HomeScene extends Phaser.Scene {
       onClick: () => {
         applySelfCare(p, item);
         session.save();
-        banner(this, t('self_care.done', { name: t(item.name_key) }), CSS.mint, HEIGHT * 0.18);
+        banner(this, t('self_care.done', { name: t(item.name_key) }), CSS.good, HEIGHT * 0.18);
         onDone();
       },
     });

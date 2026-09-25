@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import type { Vec2 } from '../../core/vec';
 import { DEPTH } from '../depth';
-import { COLOR } from '../theme';
+import { WORLD } from '../theme';
 
 /**
  * 画面のどこを触っても、そこを中心に出るスティック。キーボード（WASD / 矢印）も合成する。
@@ -18,8 +18,8 @@ export class VirtualStick {
   enabled = true;
 
   constructor(scene: Phaser.Scene) {
-    this._base = scene.add.circle(0, 0, this._radius, COLOR.white, 0.12).setStrokeStyle(4, COLOR.white, 0.4).setScrollFactor(0).setDepth(DEPTH.hud + 50).setVisible(false);
-    this._knob = scene.add.circle(0, 0, 38, COLOR.pinkSoft, 0.8).setScrollFactor(0).setDepth(DEPTH.hud + 51).setVisible(false);
+    this._base = scene.add.circle(0, 0, this._radius, 0xffffff, 0.25).setStrokeStyle(5, 0xffffff, 0.7).setScrollFactor(0).setDepth(DEPTH.hud + 50).setVisible(false);
+    this._knob = scene.add.circle(0, 0, 38, WORLD.shot, 0.9).setScrollFactor(0).setDepth(DEPTH.hud + 51).setVisible(false);
     const kb = scene.input.keyboard;
     this._keys = kb
       ? (kb.addKeys({ up: 'UP', down: 'DOWN', left: 'LEFT', right: 'RIGHT', w: 'W', a: 'A', s: 'S', d: 'D' }) as VirtualStick['_keys'])

@@ -42,7 +42,8 @@ function steer(sim: StreetSim): Vec2 {
   let dx = 0;
   let dy = 0;
   if (target) {
-    const d = normalize({ x: target.x - me.x, y: target.y - me.y });
+    // 建物を回り込む向き（人は画面を見て道なりに動く）
+    const d = sim.navigate(me, target);
     dx += d.x;
     dy += d.y;
   }

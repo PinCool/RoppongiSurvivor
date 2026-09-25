@@ -3,7 +3,7 @@ import { normalizeName, validateName } from '../../core/career/genjiName';
 import { createPlayer } from '../../core/career/playerState';
 import { t } from '../i18n';
 import { session } from '../session';
-import { CSS, FONT, HEIGHT, WIDTH, textStyle } from '../theme';
+import { CSS, FONT, HEIGHT, WIDTH, drawBackdrop, textStyle } from '../theme';
 import { Button } from '../ui/Button';
 import { fadeTo } from '../ui/fx';
 
@@ -19,12 +19,13 @@ export class NameScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.cameras.main.fadeIn(300);
-    this.add.image(WIDTH / 2, 380, 'room').setAlpha(0.35).setScale(1.1);
+    this.cameras.main.fadeIn(300, 255, 227, 240);
+    drawBackdrop(this);
+    this.add.image(WIDTH / 2, 380, 'room').setAlpha(0.5).setScale(1.1);
     this.add.image(WIDTH / 2, 190, 'logo').setScale(0.9);
     this.add.text(WIDTH / 2, 560, t('name.prompt'), textStyle(34, CSS.text, { align: 'center' })).setOrigin(0.5);
     this.add.text(WIDTH / 2, 640, t('name.note', { max: session.data.player.genji_name_max_length }), textStyle(22, CSS.sub, { align: 'center' })).setOrigin(0.5);
-    const error = this.add.text(WIDTH / 2, 800, '', textStyle(24, CSS.red)).setOrigin(0.5);
+    const error = this.add.text(WIDTH / 2, 800, '', textStyle(24, CSS.bad)).setOrigin(0.5);
 
     this._input = this.createInput();
     const submit = () => {
@@ -59,10 +60,10 @@ export class NameScene extends Phaser.Scene {
     Object.assign(input.style, {
       position: 'absolute',
       boxSizing: 'border-box',
-      border: '3px solid #ffb3d1',
-      borderRadius: '18px',
-      background: '#2a2150',
-      color: '#ffffff',
+      border: '4px solid #ffb8d6',
+      borderRadius: '999px',
+      background: '#ffffff',
+      color: '#5a3a5e',
       textAlign: 'center',
       fontFamily: FONT,
       fontWeight: 'bold',

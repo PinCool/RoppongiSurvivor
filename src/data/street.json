@@ -48,13 +48,29 @@
     "start_interval_seconds": 1.0,
     "min_interval_seconds": 0.22,
     "interval_decay_per_minute": 0.3,
-    "distance_min": 520,
-    "distance_max": 720,
     "max_alive": 90
   },
   "stage_scaling": {
-    "enemy_hp_per_stage": 0.12,
-    "spawn_rate_per_stage": 0.04
+    "enemy_hp_per_stage": 0.06,
+    "spawn_rate_per_stage": 0.02
   },
-  "gem_magnet_speed": 700
+  "gem_magnet_speed": 700,
+  "city": {
+    "pitch": 780,
+    "road_half_width": 160,
+    "lot_size": 206,
+    "lot_margin": 12,
+    "lot_gap": 24,
+    "empty_lot_chance": 0.35,
+    "plaza_block_chance": 0.2,
+    "spawn_clear_radius": 240,
+    "nav_cell": 50,
+    "nav_refresh_seconds": 0.25
+  },
+  "view": {
+    "iso_x": 0.707,
+    "iso_y": 0.456,
+    "spawn_screen_half_w": 600,
+    "spawn_screen_half_h": 880
+  }
 }

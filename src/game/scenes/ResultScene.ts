@@ -4,7 +4,7 @@ import { byId } from '../../core/data/gameData';
 import { sfx } from '../audio/sfx';
 import { t, yen } from '../i18n';
 import { session } from '../session';
-import { COLOR, CSS, HEIGHT, WIDTH, textStyle, wrappedStyle } from '../theme';
+import { CSS, HEIGHT, WIDTH, drawBackdrop, drawPanel, textStyle, titleStyle, wrappedStyle } from '../theme';
 import { Button } from '../ui/Button';
 import { fadeTo } from '../ui/fx';
 
@@ -23,32 +23,31 @@ export class ResultScene extends Phaser.Scene {
     session.lastService = null;
     session.save();
 
-    this.cameras.main.fadeIn(300);
-    this.cameras.main.setBackgroundColor(COLOR.night);
+    this.cameras.main.fadeIn(300, 255, 227, 240);
+    drawBackdrop(this);
     this.time.delayedCall(250, () => sfx.play('shop_settle'));
     if (report.levelsGained > 0) this.time.delayedCall(1100, () => sfx.play('level_up'));
-    const titleColor = report.outcome === 'goal' ? CSS.gold : report.outcome === 'late' ? CSS.pinkSoft : CSS.red;
-    this.add.text(WIDTH / 2, 120, t(`result.title.${report.outcome}`), textStyle(56, titleColor, { stroke: CSS.dark, strokeThickness: 8 })).setOrigin(0.5);
+    const titleStroke = report.outcome === 'goal' ? CSS.titleStroke : report.outcome === 'late' ? CSS.accent : '#9b6bff';
+    this.add.text(WIDTH / 2, 120, t(`result.title.${report.outcome}`), titleStyle(56, titleStroke)).setOrigin(0.5);
 
     const g = this.add.graphics();
-    g.fillStyle(COLOR.panel, 0.95);
-    g.fillRoundedRect(32, 210, WIDTH - 64, 760, 28);
+    drawPanel(g, 28, 206, WIDTH - 56, 768);
 
     const rows: [string, string, string][] = [
-      [t('result.sales'), yen(report.sales), CSS.gold],
-      [t('result.earned'), yen(report.earned), CSS.gold],
-      [t('result.exp'), t('result.exp_value', { exp: report.exp }), CSS.mint],
+      [t('result.sales'), yen(report.sales), CSS.money],
+      [t('result.earned'), yen(report.earned), CSS.money],
+      [t('result.exp'), t('result.exp_value', { exp: report.exp }), CSS.good],
       [t('result.kills'), t('result.kills_value', { n: report.kills }), CSS.text],
       [t('result.stage'), t('result.stage_value', { before: report.stageBefore, after: report.stageAfter }), CSS.text],
     ];
-    if (report.levelsGained > 0) rows.push([t('result.level_up'), t('result.level_value', { level: report.levelAfter }), CSS.pink]);
-    if (report.outcome === 'late') rows.push([t('result.late_note'), '', CSS.red]);
+    if (report.levelsGained > 0) rows.push([t('result.level_up'), t('result.level_value', { level: report.levelAfter }), CSS.money]);
+    if (report.outcome === 'late') rows.push([t('result.late_note'), '', CSS.bad]);
     if (report.rival) {
       const name = t(byId(session.data.rivals, report.rival.id).name_key);
       rows.push([
         t('result.rival', { name }),
         t(report.rival.won ? 'result.rival_won' : 'result.rival_lost', { target: yen(report.rival.target) }),
-        report.rival.won ? CSS.gold : CSS.red,
+        report.rival.won ? CSS.money : CSS.bad,
       ]);
     }
 

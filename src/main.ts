@@ -9,12 +9,18 @@ import { StreetScene } from './game/scenes/StreetScene';
 import { session } from './game/session';
 import { COLOR, HEIGHT, WIDTH } from './game/theme';
 
+// 書体を読み終わってから起動する（Canvas の文字は後から書体が来ても描き直されない）。読めなくても 3 秒で諦めて起動
+await Promise.race([
+  Promise.all([document.fonts.load('800 32px "M PLUS Rounded 1c"'), document.fonts.load('500 32px "M PLUS Rounded 1c"')]),
+  new Promise((resolve) => setTimeout(resolve, 3000)),
+]).catch(() => undefined);
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'app',
   width: WIDTH,
   height: HEIGHT,
-  backgroundColor: COLOR.night,
+  backgroundColor: COLOR.bgTop,
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   input: { activePointers: 3 },
   render: { antialias: true, pixelArt: false },

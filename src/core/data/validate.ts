@@ -37,9 +37,14 @@ const SHAPES: Record<keyof GameData, Shape> = {
     player: { move_speed: N, radius: N, magnet_radius: N, pickup_radius: N, invincible_seconds: N },
     weapon: { cooldown_seconds: N, damage: N, projectile_speed: N, projectile_radius: N, range: N, projectile_life_seconds: N },
     street_level: { exp_thresholds: { array: N }, damage_per_level: N, cooldown_multiplier_per_level: N, extra_projectile_every_levels: N },
-    spawn: { start_interval_seconds: N, min_interval_seconds: N, interval_decay_per_minute: N, distance_min: N, distance_max: N, max_alive: N },
+    spawn: { start_interval_seconds: N, min_interval_seconds: N, interval_decay_per_minute: N, max_alive: N },
     stage_scaling: { enemy_hp_per_stage: N, spawn_rate_per_stage: N },
     gem_magnet_speed: N,
+    city: {
+      pitch: N, road_half_width: N, lot_size: N, lot_margin: N, lot_gap: N,
+      empty_lot_chance: N, plaza_block_chance: N, spawn_clear_radius: N, nav_cell: N, nav_refresh_seconds: N,
+    },
+    view: { iso_x: N, iso_y: N, spawn_screen_half_w: N, spawn_screen_half_h: N },
   },
   enemies: {
     array: {
@@ -141,7 +146,16 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
   if (s.max_companions < 1) errors.push('street.max_companions: 1 未満');
   ascending(s.street_level.exp_thresholds, 'street.street_level.exp_thresholds', errors);
   if (!(s.spawn.min_interval_seconds <= s.spawn.start_interval_seconds)) errors.push('street.spawn: 最短間隔が開始間隔より長い');
-  if (!(s.spawn.distance_min < s.spawn.distance_max)) errors.push('street.spawn: distance_min >= distance_max');
+  const city = s.city;
+  const inner = city.pitch - city.road_half_width * 2;
+  if (!(inner > 0)) errors.push('street.city: 道が太すぎて区画が無い');
+  if (2 * city.lot_size + city.lot_gap + 2 * city.lot_margin > inner) errors.push('street.city: 建物 2×2 が区画に収まらない');
+  probability(city.empty_lot_chance, 'street.city.empty_lot_chance', errors);
+  probability(city.plaza_block_chance, 'street.city.plaza_block_chance', errors);
+  if (!(city.road_half_width * 2 > s.player.radius * 4)) errors.push('street.city.road_half_width: 自機が通れないほど狭い');
+  positive(city.nav_cell, 'street.city.nav_cell', errors);
+  positive(s.view.iso_x, 'street.view.iso_x', errors);
+  positive(s.view.iso_y, 'street.view.iso_y', errors);
 
   data.enemies.forEach((e, i) => {
     positive(e.max_hp, `enemies[${i}].max_hp`, errors);

@@ -1,6 +1,8 @@
 import type { CustomerData, EnemyData, GameData, RivalData, StreetData } from '../data/types';
 import { Rng } from '../rng';
 import { circlesOverlap, clamp, clampLength1, distance, distanceSq, normalize, type Vec2 } from '../vec';
+import { blockedAt, generateCity, resolveCircle, type City } from './city';
+import { NavGrid } from './nav';
 
 /**
  * 集客パート（ヴァンサバ風）のシミュレーション。固定タイムステップで進み、描画は一切しない。
@@ -9,12 +11,15 @@ import { circlesOverlap, clamp, clampLength1, distance, distanceSq, normalize, t
  * 近づくと一時停止して 3 択（同伴 / 経験値 / 回復）→ ゴール（お店）に着けば出勤成功。
  * 制限時間を過ぎれば遅刻、HP が尽きれば途中帰宅。
  * 関門のステージではライバル（キャバ嬢）も街に出て、近くのお客を横取りしに走る。
+ * 街には建物（通れない壁）があり、敵とライバルは回り込みの経路（NavGrid）で向かってくる。
  */
 
 export const FIXED_DT = 1 / 60;
 const MAX_TICKS_PER_UPDATE = 8;
 /** ライバルが最初に立つ、プレイヤーからの距離 */
 const RIVAL_START_DISTANCE = 320;
+/** 敵・お客の当たりの目安の半径（経路のマスを歩けるか決める） */
+const AGENT_RADIUS = 20;
 
 export interface StreetInput {
   /** スティックの向き。長さ 1 を超える分は切る */
@@ -147,6 +152,7 @@ export class StreetSim {
   readonly customers: CustomerInstance[] = [];
   readonly companions: Companion[] = [];
   readonly rival: RivalBody | null;
+  readonly city: City;
 
   private readonly _cfg: StreetData;
   private readonly _data: GameData;
@@ -154,6 +160,9 @@ export class StreetSim {
   private readonly _stage: number;
   private readonly _customerPool: CustomerData[];
   private readonly _rivalData: RivalData | null;
+  private readonly _nav: NavGrid;
+  /** 目的地のマス → 流れ場と作った時刻（自機へ・ライバルの狙い・ボットの行き先で使い回す） */
+  private readonly _fields = new Map<string, { field: Int32Array; at: number }>();
   private _events: StreetEvent[] = [];
   private _time = 0;
   private _accumulator = 0;
@@ -173,6 +182,8 @@ export class StreetSim {
     this._cfg = data.street;
     this._rng = new Rng(params.seed);
     this._stage = Math.max(1, params.stageLevel);
+    this.city = generateCity(this._cfg, params.seed);
+    this._nav = new NavGrid(this.city, this._cfg.city.nav_cell, AGENT_RADIUS);
     this._customerPool = data.customers.filter((c) => c.min_stage <= this._stage && c.weight > 0);
     if (this._customerPool.length === 0) throw new Error(`ステージ ${this._stage} で出るお客が居ない`);
     this.player = {
@@ -358,15 +369,74 @@ export class StreetSim {
     pos.y = clamp(pos.y, -half, half);
   }
 
-  /** プレイヤーから distance 離れた点。ワールドの外に出るなら内側へ押し戻す */
-  private pointAround(distanceFromPlayer: number, margin: number): Vec2 {
-    const angle = this._rng.range(0, Math.PI * 2);
-    const pos = {
-      x: this.player.pos.x + Math.cos(angle) * distanceFromPlayer,
-      y: this.player.pos.y + Math.sin(angle) * distanceFromPlayer,
-    };
-    this.clampToWorld(pos, margin);
-    return pos;
+  /** プレイヤーから distance 離れた、建物に掛からない点。ワールドの外に出るなら内側へ押し戻す */
+  private pointAround(distanceFromPlayer: number, margin: number, clearance = AGENT_RADIUS): Vec2 {
+    let pos = { x: 0, y: 0 };
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const angle = this._rng.range(0, Math.PI * 2);
+      pos = {
+        x: this.player.pos.x + Math.cos(angle) * distanceFromPlayer,
+        y: this.player.pos.y + Math.sin(angle) * distanceFromPlayer,
+      };
+      this.clampToWorld(pos, margin);
+      if (!blockedAt(this.city, pos, clearance)) return pos;
+    }
+    return this.snapToRoad(pos);
+  }
+
+  /** いちばん近い道の芯線へ寄せる（建物を避けた点が見つからなかったとき） */
+  private snapToRoad(pos: Vec2): Vec2 {
+    const pitch = this.city.pitch;
+    const rx = Math.round(pos.x / pitch) * pitch;
+    const ry = Math.round(pos.y / pitch) * pitch;
+    return Math.abs(pos.x - rx) < Math.abs(pos.y - ry) ? { x: rx, y: pos.y } : { x: pos.x, y: ry };
+  }
+
+  /**
+   * 画面の外の楕円の上の点（敵の湧き）。斜め見下ろしでは地面の同じ距離でも縦と横で画面の距離が違うので、
+   * 画面の座標で楕円を取ってから地面へ戻す。
+   */
+  private pointOffscreen(radius: number): Vec2 {
+    const v = this._cfg.view;
+    let pos = { x: 0, y: 0 };
+    for (let attempt = 0; attempt < 16; attempt++) {
+      const angle = this._rng.range(0, Math.PI * 2);
+      const sx = Math.cos(angle) * v.spawn_screen_half_w;
+      const sy = Math.sin(angle) * v.spawn_screen_half_h;
+      pos = {
+        x: this.player.pos.x + (sx / v.iso_x + sy / v.iso_y) / 2,
+        y: this.player.pos.y + (sy / v.iso_y - sx / v.iso_x) / 2,
+      };
+      this.clampToWorld(pos, radius);
+      if (!blockedAt(this.city, pos, radius)) return pos;
+    }
+    return this.snapToRoad(pos);
+  }
+
+  /**
+   * from から to へ向かう向き（建物を回り込む）。流れ場は目的地のマスごとに nav_refresh_seconds だけ使い回す。
+   * 近いときはまっすぐ。ボットや描画側からも呼べる
+   */
+  navigate(from: Vec2, to: Vec2): Vec2 {
+    return this.navigateWith(this.fieldFor(to), from, to);
+  }
+
+  private navigateWith(field: Int32Array, from: Vec2, to: Vec2): Vec2 {
+    const direct = normalize({ x: to.x - from.x, y: to.y - from.y });
+    if (distanceSq(from, to) < (this._cfg.city.nav_cell * 1.5) ** 2) return direct;
+    return this._nav.direction(field, from) ?? direct;
+  }
+
+  private fieldFor(to: Vec2): Int32Array {
+    const [i, j] = this._nav.cellOf(to);
+    const key = `${i},${j}`;
+    let entry = this._fields.get(key);
+    if (!entry || this._time - entry.at > this._cfg.city.nav_refresh_seconds) {
+      entry = { field: this._nav.flowTo(to), at: this._time };
+      this._fields.set(key, entry);
+      if (this._fields.size > 32) this._fields.delete(this._fields.keys().next().value as string);
+    }
+    return entry.field;
   }
 
   private spawnScheduledCustomers(): void {
@@ -392,7 +462,7 @@ export class StreetSim {
 
   private revealGoalIfDue(): void {
     if (this._goal || this._time < this._cfg.goal_appear_seconds) return;
-    this._goal = this.pointAround(this._cfg.goal_distance, this._cfg.goal_radius + 40);
+    this._goal = this.pointAround(this._cfg.goal_distance, this._cfg.goal_radius + 40, this._cfg.goal_radius);
     this._events.push({ type: 'goal_appeared', pos: { ...this._goal } });
   }
 
@@ -405,6 +475,7 @@ export class StreetSim {
       this.player.pos.x += move.x * this._cfg.player.move_speed * dt;
       this.player.pos.y += move.y * this._cfg.player.move_speed * dt;
       this.clampToWorld(this.player.pos, this.player.radius);
+      resolveCircle(this.city, this.player.pos, this.player.radius);
     }
     if (this.player.invincible > 0) this.player.invincible = Math.max(0, this.player.invincible - dt);
   }
@@ -435,7 +506,7 @@ export class StreetSim {
       uid: this.newUid(),
       typeId: type.id,
       visualId: type.visual_id,
-      pos: this.pointAround(this._rng.range(this._cfg.spawn.distance_min, this._cfg.spawn.distance_max), type.radius),
+      pos: this.pointOffscreen(type.radius),
       hp,
       maxHp: hp,
       radius: type.radius,
@@ -447,10 +518,12 @@ export class StreetSim {
 
   private moveEnemies(dt: number): void {
     const target = this.player.pos;
+    const field = this.fieldFor(target); // 全員が同じ流れ場を下る（1 ティックに 1 回だけ引く）
     for (const enemy of this.enemies) {
-      const dir = normalize({ x: target.x - enemy.pos.x, y: target.y - enemy.pos.y });
+      const dir = this.navigateWith(field, enemy.pos, target);
       enemy.pos.x += dir.x * enemy.speed * dt;
       enemy.pos.y += dir.y * enemy.speed * dt;
+      resolveCircle(this.city, enemy.pos, enemy.radius);
     }
   }
 
@@ -505,7 +578,7 @@ export class StreetSim {
         this._events.push({ type: 'enemy_hit', uid: hit.uid, pos: { ...hit.pos }, damage: shot.damage });
         if (hit.hp <= 0) this.killEnemy(hit);
       }
-      if (hit || shot.life <= 0) this.projectiles.splice(i, 1);
+      if (hit || shot.life <= 0 || blockedAt(this.city, shot.pos)) this.projectiles.splice(i, 1);
     }
   }
 
@@ -573,6 +646,7 @@ export class StreetSim {
       customer.pos.x += customer.wanderDir.x * this._cfg.customer_wander_speed * dt;
       customer.pos.y += customer.wanderDir.y * this._cfg.customer_wander_speed * dt;
       this.clampToWorld(customer.pos, 80);
+      if (resolveCircle(this.city, customer.pos, AGENT_RADIUS)) customer.wanderTimer = 0;
       if (this._pendingEncounter === null && customer.skipCooldown <= 0 && distanceSq(customer.pos, this.player.pos) <= talkSq) {
         this._pendingEncounter = customer.uid;
         this._events.push({ type: 'encounter', uid: customer.uid });
@@ -605,11 +679,12 @@ export class StreetSim {
     const dist = Math.hypot(dx, dy);
     rival.moving = dist > keepAway + 4;
     if (rival.moving) {
-      rival.facing = normalize({ x: dx, y: dy });
+      rival.facing = this.navigate(rival.pos, goal);
       const step = Math.min(data.move_speed * dt, dist - keepAway);
       rival.pos.x += rival.facing.x * step;
       rival.pos.y += rival.facing.y * step;
       this.clampToWorld(rival.pos, 40);
+      resolveCircle(this.city, rival.pos, AGENT_RADIUS);
     }
     if (target && distance(target.pos, rival.pos) <= data.steal_radius) {
       target.state = 'stolen';

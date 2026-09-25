@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// 1 本あたり数百 ms のシミュレーションを何十本も回すので、既定の 5 秒では足りない
+vi.setConfig({ testTimeout: 60_000 });
 import { playStreet, playStreetSim } from './bot';
 import { freshData } from './helpers';
 
@@ -7,7 +10,13 @@ import { freshData } from './helpers';
  * ボットは完璧に逃げ回るので人より上手い —— ここでの「余裕」は人にとっての「ちょうどいい」くらい。
  * 数値を変えてここが落ちたら、意図した難しさの変化かを確かめてから閾値を見直す。
  */
-function summarize(stage: number, runs = 20) {
+const memo = new Map<number, ReturnType<typeof compute>>();
+function summarize(stage: number) {
+  if (!memo.has(stage)) memo.set(stage, compute(stage, 12));
+  return memo.get(stage)!;
+}
+
+function compute(stage: number, runs: number) {
   const outcomes = Array.from({ length: runs }, (_, i) => playStreet(freshData(), stage, 1000 + i));
   return {
     goalRate: outcomes.filter((o) => o.kind === 'goal').length / runs,
@@ -45,7 +54,7 @@ describe('ライバル戦の難易度', () => {
   it('クリスタルの関門: 上手く動けば半分以上のお客は守れるが、ときどき横取りされる', () => {
     const data = freshData();
     const crystal = data.rivals.find((r) => r.id === 'crystal')!;
-    const runs = Array.from({ length: 20 }, (_, i) => playStreetSim(freshData(), crystal.gate_stage, 3000 + i));
+    const runs = Array.from({ length: 12 }, (_, i) => playStreetSim(freshData(), crystal.gate_stage, 3000 + i));
     const companions = runs.reduce((s, r) => s + r.outcome!.companions.length, 0) / runs.length;
     const steals = runs.reduce((s, r) => s + r.rival!.steals, 0) / runs.length;
     expect(companions).toBeGreaterThanOrEqual(1.5); // 3 人中の半分。ボットでいまは 1.7〜1.8

@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import { DEPTH } from '../depth';
-import { COLOR, HEIGHT, WIDTH, textStyle } from '../theme';
+import { COLOR, CSS, HEIGHT, WIDTH, drawPanel, textStyle, titleStyle } from '../theme';
 
 /** 画面中央に大きく出して消える告知（「お客さん出現！」など） */
 export function banner(scene: Phaser.Scene, text: string, color: string, y = HEIGHT * 0.28): void {
+  // 字は白、縁取りに色を載せる（可愛いソシャゲの見出し）
   const label = scene.add
-    .text(WIDTH / 2, y, text, textStyle(54, color, { stroke: '#1b1433', strokeThickness: 10, align: 'center' }))
+    .text(WIDTH / 2, y, text, titleStyle(52, color, { align: 'center', strokeThickness: 12 }))
     .setOrigin(0.5)
     .setScrollFactor(0)
     .setDepth(DEPTH.hud + 10)
@@ -23,16 +24,12 @@ export function banner(scene: Phaser.Scene, text: string, color: string, y = HEI
   });
 }
 
-/** 画面全体を薄暗くして、その上にパネルを置く（モーダル）。戻り値の container を destroy すれば閉じる */
+/** 画面全体に幕を掛けて、その上に白いパネルを置く（モーダル）。戻り値の container を destroy すれば閉じる */
 export function modal(scene: Phaser.Scene, panelHeight: number, panelY = HEIGHT / 2): Phaser.GameObjects.Container {
   const root = scene.add.container(0, 0).setScrollFactor(0).setDepth(DEPTH.hud + 100);
-  const dim = scene.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x000000, 0.6).setInteractive();
+  const dim = scene.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, COLOR.scrim, 0.55).setInteractive();
   const panel = scene.add.graphics();
-  const w = WIDTH - 48;
-  panel.fillStyle(COLOR.panel, 0.98);
-  panel.fillRoundedRect(24, panelY - panelHeight / 2, w, panelHeight, 28);
-  panel.lineStyle(4, COLOR.pinkSoft, 0.8);
-  panel.strokeRoundedRect(24, panelY - panelHeight / 2, w, panelHeight, 28);
+  drawPanel(panel, 24, panelY - panelHeight / 2, WIDTH - 48, panelHeight);
   root.add([dim, panel]);
   root.setAlpha(0);
   scene.tweens.add({ targets: root, alpha: 1, duration: 150 });
@@ -52,7 +49,7 @@ export function pinToScreen(obj: Phaser.GameObjects.GameObject): void {
 
 /** 数字などを浮かせて消す（ダメージ・売上） */
 export function floatText(scene: Phaser.Scene, x: number, y: number, text: string, color: string, size = 26): void {
-  const label = scene.add.text(x, y, text, textStyle(size, color, { stroke: '#1b1433', strokeThickness: 5 })).setOrigin(0.5).setDepth(DEPTH.shots + 1);
+  const label = scene.add.text(x, y, text, textStyle(size, color, { stroke: CSS.onWorldStroke, strokeThickness: 5 })).setOrigin(0.5).setDepth(DEPTH.shots + 1);
   scene.tweens.add({ targets: label, y: y - 50, alpha: 0, duration: 650, ease: 'Cubic.Out', onComplete: () => label.destroy() });
 }
 

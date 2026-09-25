@@ -4,44 +4,90 @@ import type Phaser from 'phaser';
 export const WIDTH = 720;
 export const HEIGHT = 1280;
 
-export const FONT = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", sans-serif';
+/**
+ * 書体。丸ゴシックの M PLUS Rounded 1c（index.html で読み込み、main.ts が読み終わるのを待ってから起動する）。
+ * 端末に無くても同じ見た目になるように、端末の書体には頼らない。
+ */
+export const FONT = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif';
 
-/** フラットなパステル × 夜のネオン。数値で持つ色（Graphics 用）と文字列の色（Text 用）を並べる */
+/**
+ * UI の色（可愛いソシャゲ風。2026-09-25 ユーザー指示「可愛いソシャゲのような色」）。
+ * パステルのピンク・ラベンダー・ミント・クリーム。白い丸角パネルに太めのパステルの縁、ぷっくりしたボタン。
+ * 色は「何のための色か」で引く。ボタンの色は Button の variant で選ぶ（呼び側で色を渡さない）。
+ */
 export const COLOR = {
-  night: 0x1b1433,
-  nightDeep: 0x120d24,
-  panel: 0x2a2150,
-  panelLight: 0x3a2f6b,
-  pink: 0xff5fa2,
-  pinkSoft: 0xffb3d1,
-  cyan: 0x5ee3ff,
-  gold: 0xffd166,
-  mint: 0x7cf0c0,
-  lavender: 0xb9a7ff,
-  red: 0xff5a6e,
-  white: 0xffffff,
-  gray: 0x6f6790,
+  /** 画面の地（上下のグラデーション） */
+  bgTop: 0xffe3f0,
+  bgBottom: 0xe6dcff,
+  /** 地に散らす水玉 */
+  bgDot: 0xffffff,
+  /** パネル・カード */
+  surface: 0xffffff,
+  /** パネルの中の一段沈んだ面（リストの行など） */
+  surfaceAlt: 0xfff4f9,
+  /** パネルの縁 */
+  frame: 0xffb8d6,
+  /** パネルの見出しの帯 */
+  ribbon: 0xff7eb3,
+  /** 暗い幕（モーダルの後ろ） */
+  scrim: 0x3a1f47,
+  gaugeTrack: 0xf3e6f0,
   hp: 0xff6f91,
-  mp: 0x7a8cff,
-  drunk: 0xffb45e,
+  mp: 0x6fa8ff,
+  drunk: 0xffb347,
+  exp: 0x5fd6a4,
 } as const;
 
+/** ぷっくりボタンの色。face = 面、shade = 下の段と字の縁取り */
+export const BUTTON = {
+  primary: { face: 0xff6fa8, shade: 0xe0508b, text: '#ffffff', stroke: '#d14781' },
+  secondary: { face: 0x8ec5ff, shade: 0x5f9fe6, text: '#ffffff', stroke: '#4f8fd6' },
+  mint: { face: 0x6ed8b0, shade: 0x3fb98c, text: '#ffffff', stroke: '#35a57c' },
+  yellow: { face: 0xffd45c, shade: 0xe8b12e, text: '#ffffff', stroke: '#d49b1c' },
+  quiet: { face: 0xffffff, shade: 0xe9d6e6, text: '#8a5a86', stroke: '#ffffff' },
+  disabled: { face: 0xe6dfe6, shade: 0xcfc4cf, text: '#ffffff', stroke: '#bdb1bd' },
+} as const;
+export type ButtonVariant = Exclude<keyof typeof BUTTON, 'disabled'>;
+
 export const CSS = {
-  text: '#ffffff',
-  sub: '#c9c0ef',
-  dim: '#8c83b3',
-  pink: '#ff5fa2',
-  pinkSoft: '#ffb3d1',
-  gold: '#ffd166',
-  cyan: '#5ee3ff',
-  mint: '#7cf0c0',
-  red: '#ff7a8a',
-  lavender: '#c9b8ff',
-  dark: '#1b1433',
+  /** 本文（こげ茶がかった紫。真っ黒は使わない） */
+  text: '#5a3a5e',
+  sub: '#9a7a98',
+  dim: '#c4aec2',
+  /** 見出しの白い字と、その縁取り */
+  title: '#ffffff',
+  titleStroke: '#ff6fa8',
+  /** お金・強調 */
+  money: '#ff5c93',
+  good: '#2fb383',
+  bad: '#ff5b6e',
+  accent: '#ff9b2f',
+  /** 集客の上に出す字（ダメージの数字など）と、その縁取り */
+  onWorld: '#ffffff',
+  onWorldStroke: '#5a3a5e',
+  customer: '#ff4f8b',
+  rival: '#9b6bff',
+} as const;
+
+/** ゲームの中（集客の街・接客のお店）の印の色。UI とは分ける */
+export const WORLD = {
+  customer: 0xff4f8b,
+  goal: 0xffc233,
+  rival: 0x9b6bff,
+  shot: 0xff8fb8,
+  shotCore: 0xffffff,
+  gem: 0x5ee3ff,
+  gemBig: 0xffc233,
+  edge: 0xff8fb8,
 } as const;
 
 export function textStyle(size: number, color: string = CSS.text, extra: Phaser.Types.GameObjects.Text.TextStyle = {}): Phaser.Types.GameObjects.Text.TextStyle {
   return { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: 'bold', ...extra };
+}
+
+/** 見出しの字（白＋ピンクの縁取り） */
+export function titleStyle(size: number, stroke: string = CSS.titleStroke, extra: Phaser.Types.GameObjects.Text.TextStyle = {}): Phaser.Types.GameObjects.Text.TextStyle {
+  return textStyle(size, CSS.title, { stroke, strokeThickness: Math.max(6, Math.round(size / 5)), ...extra });
 }
 
 /** 行頭に来てはいけない文字（禁則）。前の行にぶら下げる */
@@ -79,4 +125,34 @@ export function wrappedStyle(size: number, color: string, width: number, extra: 
     ...extra,
     wordWrap: { callback: (text: string) => wrapJapanese(text, width, size) },
   });
+}
+
+/** 白い丸角パネル（太めのパステルの縁） */
+export function drawPanel(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, radius = 32, fill: number = COLOR.surface): void {
+  g.fillStyle(COLOR.frame, 1);
+  g.fillRoundedRect(x, y, w, h, radius);
+  g.fillStyle(fill, 1);
+  g.fillRoundedRect(x + 6, y + 6, w - 12, h - 12, Math.max(4, radius - 6));
+}
+
+/** パネルの上辺に乗る見出しの帯（リボン）。文字は呼び側で titleStyle で置く */
+export function drawRibbon(g: Phaser.GameObjects.Graphics, cx: number, cy: number, w: number, h = 64): void {
+  g.fillStyle(0xe0508b, 1);
+  g.fillRoundedRect(cx - w / 2, cy - h / 2 + 6, w, h, h / 2);
+  g.fillStyle(COLOR.ribbon, 1);
+  g.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, h / 2);
+  g.fillStyle(0xffffff, 0.3);
+  g.fillRoundedRect(cx - w / 2 + 14, cy - h / 2 + 6, w - 28, h * 0.32, h * 0.16);
+}
+
+/** 画面の地（ピンク → ラベンダーのグラデーションに白い水玉） */
+export function drawBackdrop(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  g.fillGradientStyle(COLOR.bgTop, COLOR.bgTop, COLOR.bgBottom, COLOR.bgBottom, 1);
+  g.fillRect(0, 0, WIDTH, HEIGHT);
+  g.fillStyle(COLOR.bgDot, 0.45);
+  for (let y = 20; y < HEIGHT; y += 64) {
+    for (let x = (y / 64) % 2 === 0 ? 20 : 52; x < WIDTH; x += 64) g.fillCircle(x, y, 5);
+  }
+  return g;
 }

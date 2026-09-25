@@ -79,12 +79,28 @@ export interface StreetData {
     start_interval_seconds: number;
     min_interval_seconds: number;
     interval_decay_per_minute: number;
-    distance_min: number;
-    distance_max: number;
     max_alive: number;
   };
   stage_scaling: { enemy_hp_per_stage: number; spawn_rate_per_stage: number };
   gem_magnet_speed: number;
+  /** 街の作り（city.ts）。道の格子の間隔・道の半幅・建物の大きさと並べ方 */
+  city: {
+    pitch: number;
+    road_half_width: number;
+    lot_size: number;
+    lot_margin: number;
+    lot_gap: number;
+    empty_lot_chance: number;
+    plaza_block_chance: number;
+    spawn_clear_radius: number;
+    nav_cell: number;
+    nav_refresh_seconds: number;
+  };
+  /**
+   * 地面 → 画面の写し（斜め見下ろし）: 画面 x = (x − y) × iso_x、画面 y = (x + y) × iso_y。
+   * 敵は画面の外の楕円（spawn_screen_half_w × _h）から湧く
+   */
+  view: { iso_x: number; iso_y: number; spawn_screen_half_w: number; spawn_screen_half_h: number };
 }
 
 export interface EnemyData {

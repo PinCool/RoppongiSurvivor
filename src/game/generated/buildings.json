@@ -1,0 +1,122 @@
+[
+  {
+    "key": "land_host_club_tower",
+    "width": 420,
+    "height": 735
+  },
+  {
+    "key": "land_pink_fashion",
+    "width": 420,
+    "height": 630
+  },
+  {
+    "key": "land_mob_apartment_a",
+    "width": 420,
+    "height": 601
+  },
+  {
+    "key": "land_mob_apartment_b",
+    "width": 420,
+    "height": 583
+  },
+  {
+    "key": "land_mob_apartment_beige",
+    "width": 420,
+    "height": 630
+  },
+  {
+    "key": "land_mob_office_a",
+    "width": 420,
+    "height": 542
+  },
+  {
+    "key": "land_mob_tower_a",
+    "width": 420,
+    "height": 573
+  },
+  {
+    "key": "land_mob_tower_b",
+    "width": 420,
+    "height": 767
+  },
+  {
+    "key": "land_mob_shophouse",
+    "width": 420,
+    "height": 280
+  },
+  {
+    "key": "land_mob_corner_shop",
+    "width": 420,
+    "height": 280
+  },
+  {
+    "key": "land_neon_convenience",
+    "width": 420,
+    "height": 280
+  },
+  {
+    "key": "land_karaoke_tower",
+    "width": 420,
+    "height": 578
+  },
+  {
+    "key": "land_izakaya_tower",
+    "width": 420,
+    "height": 694
+  },
+  {
+    "key": "land_violet_hotel",
+    "width": 420,
+    "height": 630
+  },
+  {
+    "key": "land_pink_apartment",
+    "width": 420,
+    "height": 650
+  },
+  {
+    "key": "land_tile_apartment",
+    "width": 420,
+    "height": 607
+  },
+  {
+    "key": "land_cafe_almond",
+    "width": 420,
+    "height": 514
+  },
+  {
+    "key": "land_live_house",
+    "width": 420,
+    "height": 563
+  },
+  {
+    "key": "land_rock_cafe",
+    "width": 420,
+    "height": 501
+  },
+  {
+    "key": "land_bar_building",
+    "width": 420,
+    "height": 591
+  },
+  {
+    "key": "land_capsule_hotel",
+    "width": 420,
+    "height": 599
+  },
+  {
+    "key": "land_game_center",
+    "width": 420,
+    "height": 503
+  },
+  {
+    "key": "land_ramen_corner_shop",
+    "width": 420,
+    "height": 280
+  },
+  {
+    "key": "land_disco_club",
+    "width": 420,
+    "height": 519
+  }
+]

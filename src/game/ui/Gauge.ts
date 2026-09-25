@@ -14,11 +14,11 @@ export class Gauge extends Phaser.GameObjects.Container {
     this._w = width;
     this._h = height;
     this._color = color;
-    const name = scene.add.text(0, height / 2, label, textStyle(Math.round(height * 0.8), CSS.sub)).setOrigin(0, 0.5);
+    const name = scene.add.text(0, height / 2, label, textStyle(Math.round(height * 0.78), CSS.sub)).setOrigin(0, 0.5);
     this._bar = scene.add.graphics();
     this._bar.x = name.width + 10;
     this._value = scene.add
-      .text(name.width + 10 + (width - name.width - 10) / 2, height / 2, '', textStyle(Math.round(height * 0.72), CSS.text, { stroke: CSS.dark, strokeThickness: 4 }))
+      .text(name.width + 10 + (width - name.width - 10) / 2, height / 2, '', textStyle(Math.round(height * 0.7), '#ffffff', { stroke: CSS.text, strokeThickness: 4 }))
       .setOrigin(0.5);
     this.add([name, this._bar, this._value]);
     scene.add.existing(this);
@@ -26,17 +26,19 @@ export class Gauge extends Phaser.GameObjects.Container {
 
   set(current: number, max: number, showMax = true): this {
     const w = this._w - this._bar.x;
+    const h = this._h;
     const ratio = max > 0 ? Phaser.Math.Clamp(current / max, 0, 1) : 0;
     const g = this._bar;
     g.clear();
-    g.fillStyle(COLOR.nightDeep, 0.9);
-    g.fillRoundedRect(0, 0, w, this._h, this._h / 2);
+    g.fillStyle(COLOR.gaugeTrack, 1);
+    g.fillRoundedRect(0, 0, w, h, h / 2);
     if (ratio > 0) {
+      const fw = Math.max(h, w * ratio);
       g.fillStyle(this._color, 1);
-      g.fillRoundedRect(0, 0, Math.max(this._h, w * ratio), this._h, this._h / 2);
+      g.fillRoundedRect(0, 0, fw, h, h / 2);
+      g.fillStyle(0xffffff, 0.35);
+      g.fillRoundedRect(6, 4, Math.max(0, fw - 12), h * 0.3, h * 0.15);
     }
-    g.lineStyle(2, 0xffffff, 0.35);
-    g.strokeRoundedRect(0, 0, w, this._h, this._h / 2);
     this._value.setText(showMax ? `${Math.ceil(current)} / ${max}` : `${Math.ceil(current)}`);
     return this;
   }
