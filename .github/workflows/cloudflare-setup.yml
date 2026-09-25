@@ -1,0 +1,53 @@
+# 一度きりの初期設定: Cloudflare Pages のプロジェクトと、Access（亀田だけが見られる）を作る。何度流しても同じ結果になる
+name: Cloudflare setup
+
+on:
+  push:
+    branches: [cloudflare-setup]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      PROJECT: roppongi-survivor
+      VIEWER: rikiya.kameda@vietajumping.com
+    steps:
+      - name: Pages プロジェクト
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" "$@"; }
+          base="https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT"
+          got=$(api "$base/pages/projects/$PROJECT")
+          if [ "$(echo "$got" | jq -r .success)" != "true" ]; then
+            got=$(api -X POST "$base/pages/projects" -d "{\"name\":\"$PROJECT\",\"production_branch\":\"main\"}")
+          fi
+          echo "$got" | jq '{success, errors, subdomain: .result.subdomain}'
+          sub=$(echo "$got" | jq -r .result.subdomain)
+          [ -n "$sub" ] && [ "$sub" != "null" ] || exit 1
+          echo "SUB=$sub" >> "$GITHUB_ENV"
+
+      - name: Access（見られるのは VIEWER だけ）
+        run: |
+          api() { curl -sS -H "Authorization: Bearer $CF_TOKEN" -H "Content-Type: application/json" "$@"; }
+          base="https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT"
+          apps=$(api "$base/access/apps")
+          echo "$apps" | jq '{success, errors, count: (.result | length)}'
+          id=$(echo "$apps" | jq -r --arg d "$SUB" '.result[]? | select(.domain == $d) | .id' | head -1)
+          body=$(jq -n --arg d "$SUB" --arg v "$VIEWER" '{
+            name: "RoppongiSurvivor", type: "self_hosted", domain: $d,
+            self_hosted_domains: [$d, ("*." + $d)],
+            session_duration: "720h", app_launcher_visible: false,
+            policies: [{ name: "owner only", decision: "allow", include: [{ email: { email: $v } }] }]
+          }')
+          if [ -n "$id" ]; then
+            res=$(api -X PUT "$base/access/apps/$id" -d "$body")
+          else
+            res=$(api -X POST "$base/access/apps" -d "$body")
+          fi
+          echo "$res" | jq '{success, errors, domain: .result.domain, domains: .result.self_hosted_domains, policies: [.result.policies[]? | {name, decision, include}]}'
+          [ "$(echo "$res" | jq -r .success)" = "true" ]
