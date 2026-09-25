@@ -11,7 +11,7 @@ export function playStreet(data: GameData, stageLevel: number, seed: number, sti
 }
 
 /** ボットで最後まで遊んだシミュレーションを返す（ライバルの横取り数なども見られる） */
-export function playStreetSim(data: GameData, stageLevel: number, seed: number, still = false): StreetSim {
+export function playStreetSim(data: GameData, stageLevel: number, seed: number, still = false, onTick?: (sim: StreetSim) => void): StreetSim {
   const rival = data.rivals.find((r) => r.gate_stage === stageLevel) ?? null;
   const sim = new StreetSim(data, { stageLevel, hp: 100, maxHp: 100, mp: 100, maxMp: 100, seed, rival });
   let guard = 0;
@@ -26,6 +26,7 @@ export function playStreetSim(data: GameData, stageLevel: number, seed: number, 
       continue;
     }
     sim.tick({ move: still ? { x: 0, y: 0 } : steer(sim) });
+    onTick?.(sim);
   }
   return sim;
 }

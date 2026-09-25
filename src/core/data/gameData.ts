@@ -1,3 +1,4 @@
+import buildings from '../../data/buildings.json';
 import calendar from '../../data/calendar.json';
 import customers from '../../data/customers.json';
 import drinks from '../../data/drinks.json';
@@ -30,6 +31,7 @@ export function loadGameData(): GameData {
     selfCare: selfCare.items,
     rivals: rivals.rivals,
     loginBonus,
+    buildings: buildings.buildings,
     homes: homes.homes,
     calendar,
     rank,

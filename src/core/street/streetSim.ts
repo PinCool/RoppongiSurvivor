@@ -18,8 +18,14 @@ export const FIXED_DT = 1 / 60;
 const MAX_TICKS_PER_UPDATE = 8;
 /** ライバルが最初に立つ、プレイヤーからの距離 */
 const RIVAL_START_DISTANCE = 320;
-/** 敵・お客の当たりの目安の半径（経路のマスを歩けるか決める） */
+/** 敵・お客の当たりの目安の半径（湧く場所・お店の場所が建物に掛からないかの判定） */
 const AGENT_RADIUS = 20;
+/**
+ * 経路のマスを「歩ける」とみなす余白 = 自機の半径（いちばん大きい。敵はこれより小さい）。
+ * 街の側で「隙間はくっつくか min_alley 以上」を守るので、ある路地は必ず自機が通れて、必ずマスにも映る。
+ * （2026-09-25 に 2 度踏んだ: 余白 20 では自機だけ通れる路地が安全地帯に、余白 4 では誰も通れない隙間へ経路が引かれた）
+ */
+const NAV_CLEARANCE = 22;
 
 export interface StreetInput {
   /** スティックの向き。長さ 1 を超える分は切る */
@@ -161,6 +167,8 @@ export class StreetSim {
   private readonly _customerPool: CustomerData[];
   private readonly _rivalData: RivalData | null;
   private readonly _nav: NavGrid;
+  /** 開始地点からの道のり。-1 のマスは閉じた中庭などで、誰も入れないので何も置かない */
+  private readonly _reach: Int32Array;
   /** 目的地のマス → 流れ場と作った時刻（自機へ・ライバルの狙い・ボットの行き先で使い回す） */
   private readonly _fields = new Map<string, { field: Int32Array; at: number }>();
   private _events: StreetEvent[] = [];
@@ -182,8 +190,9 @@ export class StreetSim {
     this._cfg = data.street;
     this._rng = new Rng(params.seed);
     this._stage = Math.max(1, params.stageLevel);
-    this.city = generateCity(this._cfg, params.seed);
-    this._nav = new NavGrid(this.city, this._cfg.city.nav_cell, AGENT_RADIUS);
+    this.city = generateCity(this._cfg, data.buildings, params.seed);
+    this._nav = new NavGrid(this.city, this._cfg.city.nav_cell, NAV_CLEARANCE);
+    this._reach = this._nav.flowTo({ x: 0, y: 0 });
     this._customerPool = data.customers.filter((c) => c.min_stage <= this._stage && c.weight > 0);
     if (this._customerPool.length === 0) throw new Error(`ステージ ${this._stage} で出るお客が居ない`);
     this.player = {
@@ -379,9 +388,15 @@ export class StreetSim {
         y: this.player.pos.y + Math.sin(angle) * distanceFromPlayer,
       };
       this.clampToWorld(pos, margin);
-      if (!blockedAt(this.city, pos, clearance)) return pos;
+      if (!blockedAt(this.city, pos, clearance) && this.reachable(pos)) return pos;
     }
     return this.snapToRoad(pos);
+  }
+
+  /** 開始地点から歩いて行ける場所か（閉じた中庭に湧かせない・置かない） */
+  private reachable(pos: Vec2): boolean {
+    const [i, j] = this._nav.cellOf(pos);
+    return this._reach[j * this._nav.size + i]! >= 0;
   }
 
   /** いちばん近い道の芯線へ寄せる（建物を避けた点が見つからなかったとき） */
@@ -408,7 +423,7 @@ export class StreetSim {
         y: this.player.pos.y + (sy / v.iso_y - sx / v.iso_x) / 2,
       };
       this.clampToWorld(pos, radius);
-      if (!blockedAt(this.city, pos, radius)) return pos;
+      if (!blockedAt(this.city, pos, radius) && this.reachable(pos)) return pos;
     }
     return this.snapToRoad(pos);
   }

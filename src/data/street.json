@@ -64,12 +64,14 @@
     "empty_lot_chance": 0.35,
     "plaza_block_chance": 0.2,
     "spawn_clear_radius": 240,
-    "nav_cell": 50,
-    "nav_refresh_seconds": 0.25
+    "nav_cell": 40,
+    "nav_refresh_seconds": 0.25,
+    "landmark_block_chance": 0.25,
+    "min_alley": 90
   },
   "view": {
     "iso_x": 0.707,
-    "iso_y": 0.456,
+    "iso_y": 0.406,
     "spawn_screen_half_w": 600,
     "spawn_screen_half_h": 880
   }

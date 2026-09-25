@@ -21,8 +21,8 @@ describe('斜め見下ろしの写し', () => {
     expect(s.y).toBeLessThan(0);
   });
 
-  it('建物の絵の床の菱形（縦横比 約 0.645）と写しの比率が合っている', () => {
-    // 地面の正方形の菱形: 幅 = 2 辺 × ax、高さ = 2 辺 × ay
-    expect(v.iso_y / v.iso_x).toBeCloseTo(0.645, 2);
+  it('建物の絵（カメラ 35 度）の床の菱形と写しの比率が合っている', () => {
+    // 地面の正方形の菱形: 幅 = 2 辺 × ax、高さ = 2 辺 × ay。35 度の見下ろしなら高さ / 幅 = sin 35°
+    expect(v.iso_y / v.iso_x).toBeCloseTo(Math.sin((35 * Math.PI) / 180), 2);
   });
 });

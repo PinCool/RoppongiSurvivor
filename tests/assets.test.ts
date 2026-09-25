@@ -1,6 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import buildingArt from '../src/game/generated/buildings.json';
 import sheets from '../src/game/generated/sprite_sheets.json';
 import { freshData } from './helpers';
 
@@ -50,6 +51,32 @@ describe('キャラの絵', () => {
     const table = sheets as Record<string, { clips: Record<string, unknown> }>;
     for (const r of freshData().rivals) {
       for (const clip of ['idle', 'run_side', 'run_front', 'run_back']) expect(table[r.visual_id]!.clips, `${r.id}:${clip}`).toHaveProperty(clip);
+    }
+  });
+});
+
+/** TokyoSurvivor の旧 buildingart 世代（種類 19〜57）の建物。使わない（2026-09-25「マップが昔のアセット使っているので削除」） */
+const OLD_BUILDINGS = [
+  'land_host_club_tower', 'land_mob_apartment_a', 'land_mob_apartment_b', 'land_mob_office_a', 'land_mob_tower_a', 'land_mob_tower_b',
+  'land_karaoke_tower', 'land_izakaya_tower', 'land_pink_apartment', 'land_tile_apartment', 'land_cafe_almond', 'land_live_house',
+  'land_rock_cafe', 'land_bar_building', 'land_capsule_hotel', 'land_game_center', 'land_disco_club', 'land_roi_building',
+  'land_ramen_corner', 'land_office_small', 'land_pachinko_hall', 'land_discount_store', 'land_conveni_corner', 'land_glass_tower',
+  'land_hills_tower', 'land_tower_red', 'land_drugstore_corner', 'land_police_box', 'land_bank_corner', 'land_yakitori_stand',
+];
+
+describe('建物の絵', () => {
+  it('データの建物はすべて絵がある', () => {
+    const keys = buildingArt.map((a) => a.key);
+    for (const b of freshData().buildings) expect(keys, b.id).toContain(b.visual_id);
+  });
+
+  it('旧世代の建物は絵にもファイルにもデータにも無い', () => {
+    const files = readdirSync(join(ROOT, 'public/assets/buildings')).map((f) => f.replace(/\.webp$/, ''));
+    const used = freshData().buildings.map((b) => b.visual_id);
+    for (const name of OLD_BUILDINGS) {
+      expect(files).not.toContain(name);
+      expect(buildingArt.map((a) => a.key)).not.toContain(name);
+      expect(used).not.toContain(name);
     }
   });
 });

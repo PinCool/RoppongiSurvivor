@@ -92,6 +92,10 @@ export interface StreetData {
     lot_gap: number;
     empty_lot_chance: number;
     plaza_block_chance: number;
+    /** 建物のある区画のうち、ランドマーク（大きい建物 1 棟）にする割合 */
+    landmark_block_chance: number;
+    /** 建物どうしの隙間は「くっつく」か「この幅以上の路地」のどちらか（中途半端な隙間は、誰も通れないのに通れそうに見える） */
+    min_alley: number;
     spawn_clear_radius: number;
     nav_cell: number;
     nav_refresh_seconds: number;
@@ -186,6 +190,18 @@ export interface SelfCareData {
   monthly_fee?: number;
 }
 
+/**
+ * 建物の種類。足元（width × depth、街の単位）は当たり判定で、絵は visual_id で引く（buildings.json）。
+ * landmark は区画まるごと 1 棟の大きい建物、それ以外は区画の 2×2 の区割りに 1 棟ずつ
+ */
+export interface BuildingKindData {
+  id: string;
+  visual_id: string;
+  width: number;
+  depth: number;
+  landmark: boolean;
+}
+
 /** ライバルのキャバ嬢。gate_stage のステージで、その日の売上が sales_target を越えないと先へ進めない */
 export interface RivalData {
   id: string;
@@ -246,6 +262,7 @@ export interface GameData {
   selfCare: SelfCareData[];
   rivals: RivalData[];
   loginBonus: LoginBonusData;
+  buildings: BuildingKindData[];
   homes: HomeData[];
   calendar: CalendarData;
   rank: RankData;

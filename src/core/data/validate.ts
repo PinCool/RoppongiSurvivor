@@ -42,7 +42,7 @@ const SHAPES: Record<keyof GameData, Shape> = {
     gem_magnet_speed: N,
     city: {
       pitch: N, road_half_width: N, lot_size: N, lot_margin: N, lot_gap: N,
-      empty_lot_chance: N, plaza_block_chance: N, spawn_clear_radius: N, nav_cell: N, nav_refresh_seconds: N,
+      empty_lot_chance: N, plaza_block_chance: N, landmark_block_chance: N, min_alley: N, spawn_clear_radius: N, nav_cell: N, nav_refresh_seconds: N,
     },
     view: { iso_x: N, iso_y: N, spawn_screen_half_w: N, spawn_screen_half_h: N },
   },
@@ -75,6 +75,7 @@ const SHAPES: Record<keyof GameData, Shape> = {
     array: { id: S, name_key: S, visual_id: S, gate_stage: N, sales_target: N, move_speed: N, steal_radius: N },
   },
   loginBonus: { cycle: { array: { kind: S, amount: N } } },
+  buildings: { array: { id: S, visual_id: S, width: N, depth: N, landmark: B } },
   homes: { array: { id: S, name_key: S, rent: N, rank_score: N, pet_allowed: B } },
   calendar: { start_month: N, weeks_per_month: N, closed_weekday: N, debt_game_over_months: N },
   rank: {
@@ -127,6 +128,7 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
   uniqueIds(data.drinks, 'drinks', errors);
   uniqueIds(data.selfCare, 'self_care', errors);
   uniqueIds(data.rivals, 'rivals', errors);
+  uniqueIds(data.buildings, 'buildings', errors);
 
   const p = data.player;
   if (!homeIds.has(p.initial.home_id)) errors.push(`player.initial.home_id: 無い家 "${p.initial.home_id}"`);
@@ -152,8 +154,19 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
   if (2 * city.lot_size + city.lot_gap + 2 * city.lot_margin > inner) errors.push('street.city: 建物 2×2 が区画に収まらない');
   probability(city.empty_lot_chance, 'street.city.empty_lot_chance', errors);
   probability(city.plaza_block_chance, 'street.city.plaza_block_chance', errors);
+  probability(city.landmark_block_chance, 'street.city.landmark_block_chance', errors);
+  const blockRoom = inner - 2 * city.lot_margin;
+  data.buildings.forEach((b, i) => {
+    const at = `buildings[${i}] (${b.id})`;
+    positive(b.width, `${at}.width`, errors);
+    positive(b.depth, `${at}.depth`, errors);
+    const room = b.landmark ? blockRoom : city.lot_size;
+    if (Math.max(b.width, b.depth) > room) errors.push(`${at}: ${b.landmark ? '区画' : '区割り'}に収まらない`);
+  });
+  if (!data.buildings.some((b) => !b.landmark)) errors.push('buildings: 区割りに置ける小さい建物が無い');
   if (!(city.road_half_width * 2 > s.player.radius * 4)) errors.push('street.city.road_half_width: 自機が通れないほど狭い');
   positive(city.nav_cell, 'street.city.nav_cell', errors);
+  if (!(city.min_alley >= s.player.radius * 2 + city.nav_cell)) errors.push('street.city.min_alley: 自機が通れて、経路のマスにも必ず映る幅（自機の直径 + マス 1 つ）より狭い');
   positive(s.view.iso_x, 'street.view.iso_x', errors);
   positive(s.view.iso_y, 'street.view.iso_y', errors);
 

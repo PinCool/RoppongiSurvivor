@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import buildings from '../src/data/buildings.json';
 import calendar from '../src/data/calendar.json';
 import customers from '../src/data/customers.json';
 import drinks from '../src/data/drinks.json';
@@ -32,6 +33,7 @@ function rawData() {
     selfCare: selfCare.items,
     rivals: rivals.rivals,
     loginBonus,
+    buildings: buildings.buildings,
     homes: homes.homes,
     calendar,
     rank,

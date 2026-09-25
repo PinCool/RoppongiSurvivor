@@ -35,8 +35,6 @@ const FLOOR = {
   plaza: 0xcfb2ff,
   line: 0xfff3a0,
   crosswalk: 0xe9e2ff,
-  bush: 0x7fdcb4,
-  bushDark: 0x4fb78f,
 } as const;
 
 type GroundRect = { x0: number; y0: number; x1: number; y1: number };
@@ -147,16 +145,21 @@ export class StreetScene extends Phaser.Scene {
 
   // ---------- 街 ----------
 
-  /** 建物の絵を置く。床の菱形の手前の角（x1, y1）に絵の下端中央を合わせ、菱形の幅に縮める */
+  /**
+   * 建物の絵を置く。絵の pivot（足元の菱形の中心。TokyoSurvivor の採寸）を足元の中心に合わせ、
+   * 取り込みで決めた倍率（街の単位 / 絵の px）で縮める
+   */
   private placeBuildings(): void {
+    const arts = new Map(buildingArt.map((a) => [a.key, a]));
     for (const b of this._sim.city.buildings) {
-      const art = buildingArt[b.artSeed % buildingArt.length]!;
-      const front = this.iso({ x: b.x1, y: b.y1 });
-      const width = (b.x1 - b.x0 + (b.y1 - b.y0)) * this._view.iso_x;
+      const kind = byId(session.data.buildings, b.kindId);
+      const art = arts.get(kind.visual_id);
+      if (!art) throw new Error(`建物の絵が無い: ${kind.visual_id}`);
+      const center = this.iso({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 });
       const image = this.add
-        .image(front.x, front.y, `building:${art.key}`)
-        .setOrigin(0.5, 1)
-        .setScale(width / art.width)
+        .image(center.x, center.y, `building:${art.key}`)
+        .setOrigin(art.pivot_x, 1 - art.pivot_y)
+        .setScale(art.display_scale)
         .setDepth(this.buildingDepth(b));
       this._buildingImages.push({ image, center: { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 } });
     }
@@ -218,22 +221,9 @@ export class StreetScene extends Phaser.Scene {
     this.fillQuad(g, { x0: block.x0 - 8, y0: block.y0 - 8, x1: block.x1 + 8, y1: block.y1 + 8 }, FLOOR.curb);
     this.fillQuad(g, block, FLOOR.sidewalk);
     if (!block.plaza) return;
-    // 広場: 一段明るい床と、丸い植え込み
+    // 広場: 一段明るい床だけ（丸い植え込みは「緑のスライムみたい」で 2026-09-25 に外した）
     const inset = 40;
     this.fillQuad(g, { x0: block.x0 + inset, y0: block.y0 + inset, x1: block.x1 - inset, y1: block.y1 - inset }, FLOOR.plaza);
-    const cx = (block.x0 + block.x1) / 2;
-    const cy = (block.y0 + block.y1) / 2;
-    const r = (block.x1 - block.x0) / 2 - 90;
-    for (let k = 0; k < 6; k++) {
-      const a = (k / 6) * Math.PI * 2;
-      const s = this.iso({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
-      g.fillStyle(FLOOR.bushDark, 1);
-      g.fillEllipse(s.x, s.y + 6, 64, 38);
-      g.fillStyle(FLOOR.bush, 1);
-      g.fillEllipse(s.x, s.y, 60, 36);
-      g.fillStyle(0xffffff, 0.35);
-      g.fillEllipse(s.x - 10, s.y - 7, 22, 10);
-    }
   }
 
   /** 道の中央の破線（レモン色）と、交差点の横断歩道 */

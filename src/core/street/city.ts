@@ -1,4 +1,4 @@
-import type { StreetData } from '../data/types';
+import type { BuildingKindData, StreetData } from '../data/types';
 import { Rng } from '../rng';
 import type { Vec2 } from '../vec';
 
@@ -17,8 +17,8 @@ export interface Rect {
 
 export interface Building extends Rect {
   id: number;
-  /** 絵を選ぶための乱数（描画側が絵の数で割って使う。Core は絵を知らない） */
-  artSeed: number;
+  /** 建物の種類（buildings.json の id）。絵は描画側が種類の visual_id で引く */
+  kindId: string;
 }
 
 export interface Block extends Rect {
@@ -37,8 +37,10 @@ export interface City {
 
 const blockKey = (bx: number, by: number) => `${bx},${by}`;
 
-export function generateCity(cfg: StreetData, seed: number): City {
+export function generateCity(cfg: StreetData, kinds: readonly BuildingKindData[], seed: number): City {
   const c = cfg.city;
+  const small = kinds.filter((k) => !k.landmark);
+  const landmarks = kinds.filter((k) => k.landmark);
   const rng = new Rng(seed ^ 0x51ed270b);
   const half = cfg.world_half_size;
   const pitch = c.pitch;
@@ -56,23 +58,97 @@ export function generateCity(cfg: StreetData, seed: number): City {
       blocks.push({ ...block, plaza });
       if (plaza) continue;
       const list: Building[] = [];
-      for (let lx = 0; lx < 2; lx++) {
-        for (let ly = 0; ly < 2; ly++) {
-          if (rng.chance(c.empty_lot_chance)) continue;
-          const x0 = block.x0 + c.lot_margin + lx * (c.lot_size + c.lot_gap);
-          const y0 = block.y0 + c.lot_margin + ly * (c.lot_size + c.lot_gap);
-          const b = { id: id++, x0, y0, x1: x0 + c.lot_size, y1: y0 + c.lot_size, artSeed: rng.int(0, 1_000_000) };
-          // ワールドの外にはみ出す建物と、開始地点の近くの建物は置かない
-          if (b.x0 < -half || b.y0 < -half || b.x1 > half || b.y1 > half) continue;
-          if (distanceToRect({ x: 0, y: 0 }, b) < c.spawn_clear_radius) continue;
-          list.push(b);
-          buildings.push(b);
+      // 足元を区割り（または区画）の真ん中に置く。ワールドの外にはみ出す建物と、開始地点の近くの建物は置かない
+      const make = (kind: BuildingKindData, cx: number, cy: number): Building | null => {
+        const b = { id: id++, kindId: kind.id, x0: cx - kind.width / 2, y0: cy - kind.depth / 2, x1: cx + kind.width / 2, y1: cy + kind.depth / 2 };
+        if (b.x0 < -half || b.y0 < -half || b.x1 > half || b.y1 > half) return null;
+        if (distanceToRect({ x: 0, y: 0 }, b) < c.spawn_clear_radius) return null;
+        return b;
+      };
+      let placed: Building[] = [];
+      if (landmarks.length > 0 && rng.chance(c.landmark_block_chance)) {
+        const b = make(rng.pick(landmarks), (block.x0 + block.x1) / 2, (block.y0 + block.y1) / 2);
+        if (b) placed.push(b);
+      } else {
+        const lots: (Building | null)[][] = [[null, null], [null, null]];
+        for (let lx = 0; lx < 2; lx++) {
+          for (let ly = 0; ly < 2; ly++) {
+            if (rng.chance(c.empty_lot_chance)) continue;
+            const x0 = block.x0 + c.lot_margin + lx * (c.lot_size + c.lot_gap);
+            const y0 = block.y0 + c.lot_margin + ly * (c.lot_size + c.lot_gap);
+            lots[lx]![ly] = make(rng.pick(small), x0 + c.lot_size / 2, y0 + c.lot_size / 2);
+          }
         }
+        closeSlivers(lots, c.min_alley);
+        placed = dropSlivers(lots.flat().filter((b): b is Building => b !== null), c.min_alley);
       }
+      list.push(...placed);
+      buildings.push(...placed);
       byBlock.set(blockKey(bx, by), list);
     }
   }
   return { half, pitch, roadHalf: rh, blocks, buildings, byBlock };
+}
+
+/**
+ * 同じ区画の隣どうし（横並び・縦並び）の隙間が min_alley より狭ければ、寄せてくっつける。
+ * 中途半端な隙間は、自機が挟まって動けなくなったり、自機だけ入れて敵が入れない安全地帯になったりした（2026-09-25）
+ */
+function closeSlivers(lots: (Building | null)[][], minAlley: number): void {
+  const shift = (b: Building, dx: number, dy: number) => {
+    b.x0 += dx;
+    b.x1 += dx;
+    b.y0 += dy;
+    b.y1 += dy;
+  };
+  for (let ly = 0; ly < 2; ly++) {
+    const a = lots[0]![ly];
+    const b = lots[1]![ly];
+    if (!a || !b) continue;
+    const gap = b.x0 - a.x1;
+    if (gap > 0 && gap < minAlley) {
+      shift(a, gap / 2, 0);
+      shift(b, -gap / 2, 0);
+    }
+  }
+  for (let lx = 0; lx < 2; lx++) {
+    const a = lots[lx]![0];
+    const b = lots[lx]![1];
+    if (!a || !b) continue;
+    const gap = b.y0 - a.y1;
+    if (gap > 0 && gap < minAlley) {
+      shift(a, 0, gap / 2);
+      shift(b, 0, -gap / 2);
+    }
+  }
+}
+
+/**
+ * 寄せても残った中途半端な隙間と重なり（斜め向かいの建物どうしなど）は、小さい方の建物を置かないことで消す。
+ * 隙間は「くっつく（0）」か「min_alley 以上」だけにする
+ */
+function dropSlivers(list: Building[], minAlley: number): Building[] {
+  const area = (b: Building) => (b.x1 - b.x0) * (b.y1 - b.y0);
+  const sliver = (a: Building, b: Building) => {
+    const overlapX = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0);
+    const overlapY = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+    const gapX = Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1);
+    const gapY = Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1);
+    const overlapping = overlapX > 1e-6 && overlapY > 1e-6; // 縦横両方で寄せたときに斜め向かいが食い込むことがある
+    return overlapping || (overlapY > 0 && gapX > 1e-6 && gapX < minAlley) || (overlapX > 0 && gapY > 1e-6 && gapY < minAlley);
+  };
+  const kept = [...list];
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (let i = 0; i < kept.length && !changed; i++) {
+      for (let j = i + 1; j < kept.length && !changed; j++) {
+        if (!sliver(kept[i]!, kept[j]!)) continue;
+        kept.splice(area(kept[i]!) < area(kept[j]!) ? i : j, 1);
+        changed = true;
+      }
+    }
+  }
+  return kept;
 }
 
 export function distanceToRect(p: Vec2, r: Rect): number {

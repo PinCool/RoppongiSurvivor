@@ -1,0 +1,165 @@
+{
+  "buildings": [
+    {
+      "id": "neon_discount_store",
+      "visual_id": "land_neon_discount_store",
+      "width": 326,
+      "depth": 261,
+      "landmark": true
+    },
+    {
+      "id": "red_observation_tower",
+      "visual_id": "land_red_observation_tower",
+      "width": 234,
+      "depth": 237,
+      "landmark": true
+    },
+    {
+      "id": "grand_nightclub",
+      "visual_id": "land_grand_nightclub",
+      "width": 308,
+      "depth": 153,
+      "landmark": true
+    },
+    {
+      "id": "neon_convenience",
+      "visual_id": "land_neon_convenience",
+      "width": 238,
+      "depth": 170,
+      "landmark": true
+    },
+    {
+      "id": "coral_karaoke",
+      "visual_id": "land_coral_karaoke",
+      "width": 165,
+      "depth": 86,
+      "landmark": false
+    },
+    {
+      "id": "cobalt_arcade",
+      "visual_id": "land_cobalt_arcade",
+      "width": 199,
+      "depth": 156,
+      "landmark": false
+    },
+    {
+      "id": "jade_dining",
+      "visual_id": "land_jade_dining",
+      "width": 202,
+      "depth": 164,
+      "landmark": false
+    },
+    {
+      "id": "violet_hotel",
+      "visual_id": "land_violet_hotel",
+      "width": 193,
+      "depth": 169,
+      "landmark": false
+    },
+    {
+      "id": "pink_fashion",
+      "visual_id": "land_pink_fashion",
+      "width": 248,
+      "depth": 138,
+      "landmark": true
+    },
+    {
+      "id": "mob_office_gray",
+      "visual_id": "land_mob_office_gray",
+      "width": 174,
+      "depth": 157,
+      "landmark": false
+    },
+    {
+      "id": "mob_apartment_beige",
+      "visual_id": "land_mob_apartment_beige",
+      "width": 197,
+      "depth": 140,
+      "landmark": false
+    },
+    {
+      "id": "mob_zakkyo_signs",
+      "visual_id": "land_mob_zakkyo_signs",
+      "width": 119,
+      "depth": 102,
+      "landmark": false
+    },
+    {
+      "id": "mob_slim_tower",
+      "visual_id": "land_mob_slim_tower",
+      "width": 140,
+      "depth": 102,
+      "landmark": false
+    },
+    {
+      "id": "mob_shophouse",
+      "visual_id": "land_mob_shophouse",
+      "width": 194,
+      "depth": 154,
+      "landmark": false
+    },
+    {
+      "id": "mob_corner_shop",
+      "visual_id": "land_mob_corner_shop",
+      "width": 183,
+      "depth": 181,
+      "landmark": false
+    },
+    {
+      "id": "neon_pachinko",
+      "visual_id": "land_neon_pachinko",
+      "width": 213,
+      "depth": 117,
+      "landmark": true
+    },
+    {
+      "id": "ramen_corner_shop",
+      "visual_id": "land_ramen_corner_shop",
+      "width": 150,
+      "depth": 126,
+      "landmark": false
+    },
+    {
+      "id": "police_box_night",
+      "visual_id": "land_police_box_night",
+      "width": 157,
+      "depth": 120,
+      "landmark": false
+    },
+    {
+      "id": "drugstore_night",
+      "visual_id": "land_drugstore_night",
+      "width": 191,
+      "depth": 182,
+      "landmark": false
+    },
+    {
+      "id": "host_tower",
+      "visual_id": "land_host_tower",
+      "width": 131,
+      "depth": 96,
+      "landmark": false
+    },
+    {
+      "id": "live_house_night",
+      "visual_id": "land_live_house_night",
+      "width": 212,
+      "depth": 175,
+      "landmark": true
+    },
+    {
+      "id": "izakaya_night",
+      "visual_id": "land_izakaya_night",
+      "width": 133,
+      "depth": 131,
+      "landmark": false
+    },
+    {
+      "id": "corner_cafe",
+      "visual_id": "land_corner_cafe",
+      "width": 214,
+      "depth": 111,
+      "landmark": true
+    }
+  ]
+}

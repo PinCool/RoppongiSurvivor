@@ -41,7 +41,8 @@ describe('集客パートの難易度', () => {
   });
 
   it('1 回の集客は 3 分以内に収まる（モバイル向けのテンポ）', () => {
-    expect(summarize(1).maxTime).toBeLessThanOrEqual(freshData().street.duration_seconds);
+    // 遅刻は制限時間ちょうどの次のティックで終わるので、1 ティック分の余裕を見る
+    expect(summarize(1).maxTime).toBeLessThanOrEqual(freshData().street.duration_seconds + 1 / 60);
   });
 
   it('立ち止まっていると囲まれてやられる（動く意味がある）', () => {

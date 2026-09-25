@@ -75,10 +75,15 @@ export class NavGrid {
     return dist;
   }
 
-  /** 流れ場を 1 歩下る向き（長さ 1）。下れなければ null */
+  /**
+   * 流れ場を 1 歩下る向き（長さ 1）。null なら「まっすぐ向かえ」の合図:
+   * 目的地のマス（道のり 0）に着いたとき —— 目的地そのものが歩けないマス（自機がすり抜けられる狭い隙間など）でも、
+   * 最寄りの歩けるマスで止まらず、そこから先は壁沿いに滑ってまっすぐ入っていく（止まると隙間が安全地帯になった）
+   */
   direction(field: Int32Array, from: Vec2): Vec2 | null {
     const n = this.size;
     const [i, j] = this.cellOf(from);
+    if (field[j * n + i] === 0) return null;
     let best = field[j * n + i]!;
     let bi = -1;
     let bj = -1;
@@ -94,12 +99,39 @@ export class NavGrid {
         bj = nj;
       }
     }
-    if (bi < 0) return null;
+    if (bi < 0) {
+      // 歩けないマス（建物の脇の狭い隙間など）に立っていて下れる隣が無い: 近くの「届くマス」へ出る
+      const escape = this.nearestReachable(field, i, j, 4);
+      if (!escape) return null;
+      [bi, bj] = escape;
+    }
     const c = this.center(bi, bj);
     const dx = c.x - from.x;
     const dy = c.y - from.y;
     const len = Math.hypot(dx, dy);
     return len > 1e-9 ? { x: dx / len, y: dy / len } : null;
+  }
+
+  private nearestReachable(field: Int32Array, i: number, j: number, maxR: number): [number, number] | null {
+    const n = this.size;
+    let best: [number, number] | null = null;
+    let bestD = Infinity;
+    for (let r = 1; r <= maxR && !best; r++) {
+      for (let dj = -r; dj <= r; dj++) {
+        for (let di = -r; di <= r; di++) {
+          if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
+          const ni = i + di;
+          const nj = j + dj;
+          if (!this.walkable(ni, nj)) continue;
+          const d = field[nj * n + ni]!;
+          if (d >= 0 && d < bestD) {
+            bestD = d;
+            best = [ni, nj];
+          }
+        }
+      }
+    }
+    return best;
   }
 
   private nearestWalkable(i: number, j: number): [number, number] {

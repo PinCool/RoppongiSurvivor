@@ -1,122 +1,186 @@
 [
   {
-    "key": "land_host_club_tower",
+    "key": "land_neon_discount_store",
     "width": 420,
-    "height": 735
+    "height": 280,
+    "pivot_x": 0.51236979,
+    "pivot_y": 0.20410156,
+    "display_scale": 1.9285714285714286
   },
   {
-    "key": "land_pink_fashion",
+    "key": "land_red_observation_tower",
     "width": 420,
-    "height": 630
+    "height": 630,
+    "pivot_x": 0.50195312,
+    "pivot_y": 0.13053385,
+    "display_scale": 1.2857142857142858
   },
   {
-    "key": "land_mob_apartment_a",
+    "key": "land_grand_nightclub",
     "width": 420,
-    "height": 601
-  },
-  {
-    "key": "land_mob_apartment_b",
-    "width": 420,
-    "height": 583
-  },
-  {
-    "key": "land_mob_apartment_beige",
-    "width": 420,
-    "height": 630
-  },
-  {
-    "key": "land_mob_office_a",
-    "width": 420,
-    "height": 542
-  },
-  {
-    "key": "land_mob_tower_a",
-    "width": 420,
-    "height": 573
-  },
-  {
-    "key": "land_mob_tower_b",
-    "width": 420,
-    "height": 767
-  },
-  {
-    "key": "land_mob_shophouse",
-    "width": 420,
-    "height": 280
-  },
-  {
-    "key": "land_mob_corner_shop",
-    "width": 420,
-    "height": 280
+    "height": 280,
+    "pivot_x": 0.51334635,
+    "pivot_y": 0.25927734,
+    "display_scale": 1.157142857142857
   },
   {
     "key": "land_neon_convenience",
     "width": 420,
-    "height": 280
+    "height": 280,
+    "pivot_x": 0.5078125,
+    "pivot_y": 0.23535156,
+    "display_scale": 1.0285714285714285
   },
   {
-    "key": "land_karaoke_tower",
+    "key": "land_coral_karaoke",
     "width": 420,
-    "height": 578
+    "height": 630,
+    "pivot_x": 0.51025391,
+    "pivot_y": 0.10807292,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_izakaya_tower",
+    "key": "land_cobalt_arcade",
     "width": 420,
-    "height": 694
+    "height": 280,
+    "pivot_x": 0.49967448,
+    "pivot_y": 0.21972656,
+    "display_scale": 1.0928571428571427
+  },
+  {
+    "key": "land_jade_dining",
+    "width": 420,
+    "height": 630,
+    "pivot_x": 0.53662109,
+    "pivot_y": 0.14290365,
+    "display_scale": 0.7285714285714285
   },
   {
     "key": "land_violet_hotel",
     "width": 420,
-    "height": 630
+    "height": 630,
+    "pivot_x": 0.50537109,
+    "pivot_y": 0.13932292,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_pink_apartment",
+    "key": "land_pink_fashion",
     "width": 420,
-    "height": 650
+    "height": 630,
+    "pivot_x": 0.50683594,
+    "pivot_y": 0.14713542,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_tile_apartment",
+    "key": "land_mob_office_gray",
     "width": 420,
-    "height": 607
+    "height": 630,
+    "pivot_x": 0.52978516,
+    "pivot_y": 0.1233724,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_cafe_almond",
+    "key": "land_mob_apartment_beige",
     "width": 420,
-    "height": 514
+    "height": 630,
+    "pivot_x": 0.50097656,
+    "pivot_y": 0.17708333,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_live_house",
+    "key": "land_mob_zakkyo_signs",
     "width": 420,
-    "height": 563
+    "height": 630,
+    "pivot_x": 0.51123047,
+    "pivot_y": 0.12532552,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_rock_cafe",
+    "key": "land_mob_slim_tower",
     "width": 420,
-    "height": 501
+    "height": 630,
+    "pivot_x": 0.52978516,
+    "pivot_y": 0.11946615,
+    "display_scale": 0.7285714285714285
   },
   {
-    "key": "land_bar_building",
+    "key": "land_mob_shophouse",
     "width": 420,
-    "height": 591
+    "height": 280,
+    "pivot_x": 0.51074219,
+    "pivot_y": 0.21582031,
+    "display_scale": 1.0928571428571427
   },
   {
-    "key": "land_capsule_hotel",
+    "key": "land_mob_corner_shop",
     "width": 420,
-    "height": 599
+    "height": 280,
+    "pivot_x": 0.50651042,
+    "pivot_y": 0.22363281,
+    "display_scale": 1.0928571428571427
   },
   {
-    "key": "land_game_center",
+    "key": "land_neon_pachinko",
     "width": 420,
-    "height": 503
+    "height": 280,
+    "pivot_x": 0.50097656,
+    "pivot_y": 0.18652344,
+    "display_scale": 1.0928571428571427
   },
   {
     "key": "land_ramen_corner_shop",
     "width": 420,
-    "height": 280
+    "height": 280,
+    "pivot_x": 0.5,
+    "pivot_y": 0.20996094,
+    "display_scale": 1.0285714285714285
   },
   {
-    "key": "land_disco_club",
+    "key": "land_police_box_night",
     "width": 420,
-    "height": 519
+    "height": 280,
+    "pivot_x": 0.51139323,
+    "pivot_y": 0.21875,
+    "display_scale": 0.9642857142857143
+  },
+  {
+    "key": "land_drugstore_night",
+    "width": 420,
+    "height": 280,
+    "pivot_x": 0.50553385,
+    "pivot_y": 0.24267578,
+    "display_scale": 1.0285714285714285
+  },
+  {
+    "key": "land_host_tower",
+    "width": 420,
+    "height": 630,
+    "pivot_x": 0.51611328,
+    "pivot_y": 0.12402344,
+    "display_scale": 0.7285714285714285
+  },
+  {
+    "key": "land_live_house_night",
+    "width": 420,
+    "height": 280,
+    "pivot_x": 0.51953125,
+    "pivot_y": 0.2421875,
+    "display_scale": 1.0285714285714285
+  },
+  {
+    "key": "land_izakaya_night",
+    "width": 420,
+    "height": 630,
+    "pivot_x": 0.51708984,
+    "pivot_y": 0.1233724,
+    "display_scale": 0.7285714285714285
+  },
+  {
+    "key": "land_corner_cafe",
+    "width": 420,
+    "height": 280,
+    "pivot_x": 0.50520833,
+    "pivot_y": 0.20751953,
+    "display_scale": 1.0285714285714285
   }
 ]
