@@ -3,7 +3,6 @@
   "format.yen": "¥{value}",
   "common.ok": "OK",
   "common.close": "とじる",
-
   "name.prompt": "夜の街で働くための\n源氏名をつけてください",
   "name.note": "{max} 文字まで。LINE の名前と同じでも OK",
   "name.placeholder": "源氏名",
@@ -11,7 +10,6 @@
   "name.error.empty": "名前を入れてね",
   "name.error.too_long": "ちょっと長いかも…",
   "name.error.ng_word": "その名前は使えないよ",
-
   "weekday.0": "月",
   "weekday.1": "火",
   "weekday.2": "水",
@@ -19,7 +17,6 @@
   "weekday.4": "金",
   "weekday.5": "土",
   "weekday.6": "日",
-
   "stat.hp": "HP",
   "stat.mp": "MP",
   "stat.drunk": "酔い",
@@ -27,7 +24,6 @@
   "stat.beauty": "美貌",
   "stat.intellect": "教養",
   "stat.sense": "センス",
-
   "home.date": "{month}月 {week}週目（{weekday}）",
   "home.rank": "総合ランク {letter}  {score}",
   "home.name_plate": "{name}  Lv.{level}",
@@ -47,12 +43,10 @@
   "home.ad_refill": "MP回復",
   "home.ad_left": "広告 あと{n}回",
   "home.ad_refilled": "MP 全回復！",
-
   "day.morning": "おはよう！",
   "day.hangover": "二日酔い… MP の戻りが悪い",
   "day.rent_paid": "月末の家賃 {rent} を払った",
   "day.in_debt": "家賃を滞納中（{months} / {limit} か月）\n払えないままだと実家に呼び戻される…",
-
   "self_care.title": "自分磨き（あと {n} 回）  {money}",
   "self_care.gain": "{name}+{value}",
   "self_care.do": "やる",
@@ -70,35 +64,29 @@
   "self_care.live_house": "ライブハウス",
   "self_care.museum": "美術館",
   "self_care.clothes_cute": "カワイイ系の服を買う",
-
   "hobby.music": "音楽",
   "hobby.golf": "ゴルフ",
   "hobby.business": "ビジネス",
   "hobby.art": "アート",
   "hobby.wine": "ワイン",
   "hobby.anime": "アニメ",
-
   "home.oneroom_6jo": "6畳ワンルーム",
   "home.one_ldk": "1LDK",
   "home.tower_3ldk": "3LDK タワマン",
-
   "enemy.salaryman": "サラリーマン",
   "enemy.freeter": "フリーター",
   "enemy.drunk": "酔っぱらい",
-
   "customer.bandman": "かけだしバンドマン",
   "customer.office_manager": "中小企業の部長",
   "customer.it_ceo": "IT 社長",
   "customer.artist": "売れっ子デザイナー",
   "customer.real_estate": "不動産王",
-
   "drink.cast_drink": "キャスドリ",
   "drink.shot": "ショット",
   "drink.wine_bottle": "ワイン",
   "drink.champagne": "シャンパン",
   "drink.rose_champagne": "ロゼシャン",
   "drink.gold_champagne": "ゴールド",
-
   "street.start": "ステージ {stage}  出勤開始！",
   "street.goal_label": "お店",
   "street.level_up": "テンション Lv.{level}！",
@@ -121,7 +109,6 @@
   "street.outcome.goal": "出勤！",
   "street.outcome.late": "遅刻…！",
   "street.outcome.down": "ダウン…",
-
   "service.sales": "今日の売上",
   "service.guest_name": "{name}（{rank}）",
   "service.counter": "{n} / {total} 人目",
@@ -158,7 +145,6 @@
   "service.line.declined.2": "まだ早くない？もうちょっと話そうよ",
   "service.line.guest_left.1": "ごめん、今日はもう帰るわ…",
   "service.line.guest_left.2": "なんか疲れちゃった。またね…",
-
   "result.title.goal": "おつかれさま！",
   "result.title.late": "遅刻しちゃった…",
   "result.title.down": "途中で帰宅…",
@@ -178,8 +164,38 @@
   "result.no_guests": "今日はお客さんを連れて来られなかった",
   "result.down_note": "HP が尽きて、お店に着けなかった…",
   "result.go_home": "帰宅する",
-
   "game_over.title": "実家に呼び戻された…",
   "game_over.body": "家賃を半年払えず、{name}の六本木生活はここまで。\nまた一から出直そう。",
-  "game_over.restart": "新しく始める"
+  "game_over.restart": "新しく始める",
+  "home.sound_on": "♪ 音 ON",
+  "home.sound_off": "♪ 音 OFF",
+  "home.stat_line_bonus": "{name}  {value}（+{bonus}）",
+  "home.rival_notice": "ライバル戦！\n{name}の売上\n{target} を越えろ",
+  "home.work_sub_rival": "ライバル {name} と勝負！",
+  "day.expired": "{name}の効き目が切れた",
+  "day.expired_rebound": "{name}が切れた…（反動で −{rebound}）",
+  "day.rent_and_fees": "月末の家賃 {rent} と月額 {fees} を払った",
+  "login.title": "ログインボーナス {streak} 日目",
+  "login.money": "{amount} もらった！",
+  "login.hp_full": "HP 全回復！",
+  "login.mp_full": "MP 全回復！",
+  "login.receive": "受け取る",
+  "self_care.gym_24h": "24時間ジム",
+  "self_care.personal_training": "パーソナルジム",
+  "self_care.hyaluronic": "ヒアルロン酸",
+  "self_care.botox": "ボトックス",
+  "self_care.kind_timed": "{days}日間",
+  "self_care.kind_timed_active": "{days}日間（あと{left}日）",
+  "self_care.kind_subscription": "月額 {fee}",
+  "self_care.rebound_note": "切れると −{rebound}",
+  "self_care.block.subscribed": "契約中",
+  "self_care.subscribed": "契約中",
+  "self_care.cancel": "解約",
+  "rival.crystal": "クリスタル",
+  "street.rival_appeared": "ライバル {name} 出現！\nお客を取られるな！",
+  "street.customer_stolen": "{name}にお客を取られた！",
+  "street.stolen_mark": "横取り！",
+  "result.rival": "{name}との勝負",
+  "result.rival_won": "勝ち！（{target} 超え）",
+  "result.rival_lost": "負け…（目標 {target}）"
 }

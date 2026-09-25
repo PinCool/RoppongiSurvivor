@@ -38,6 +38,7 @@ describe('i18n のキー', () => {
       ...data.hobbies.map((h) => h.name_key),
       ...data.selfCare.map((s) => s.name_key),
       ...data.homes.map((h) => h.name_key),
+      ...data.rivals.map((r) => r.name_key),
     ];
     expect(missing(keys)).toEqual([]);
   });

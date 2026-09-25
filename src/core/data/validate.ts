@@ -20,6 +20,7 @@ const SHAPES: Record<keyof GameData, Shape> = {
     late_sales_multiplier: N,
     genji_name_max_length: N,
     ad_refills_per_day: N,
+    realtime: { hp_per_minute: N, mp_per_minute: N, drunk_per_minute: N, max_elapsed_minutes: N },
   },
   street: {
     duration_seconds: N,
@@ -41,7 +42,10 @@ const SHAPES: Record<keyof GameData, Shape> = {
     gem_magnet_speed: N,
   },
   enemies: {
-    array: { id: S, name_key: S, visual_id: S, max_hp: N, move_speed: N, radius: N, contact_damage: N, exp: N, from_seconds: N, weight: N },
+    array: {
+      id: S, name_key: S, visual_id: S, max_hp: N, move_speed: N, radius: N, contact_damage: N, exp: N, from_seconds: N, weight: N,
+      tint: { optional: S },
+    },
   },
   customers: {
     array: {
@@ -58,8 +62,15 @@ const SHAPES: Record<keyof GameData, Shape> = {
   },
   hobbies: { array: { id: S, name_key: S } },
   selfCare: {
-    array: { id: S, name_key: S, category: S, cost: N, gains: { record: N }, hobbies: { record: N }, min_level: N },
+    array: {
+      id: S, name_key: S, category: S, kind: S, cost: N, gains: { record: N }, hobbies: { record: N }, min_level: N,
+      duration_days: { optional: N }, rebound: { optional: N }, monthly_fee: { optional: N },
+    },
   },
+  rivals: {
+    array: { id: S, name_key: S, visual_id: S, gate_stage: N, sales_target: N, move_speed: N, steal_radius: N },
+  },
+  loginBonus: { cycle: { array: { kind: S, amount: N } } },
   homes: { array: { id: S, name_key: S, rent: N, rank_score: N, pet_allowed: B } },
   calendar: { start_month: N, weeks_per_month: N, closed_weekday: N, debt_game_over_months: N },
   rank: {
@@ -111,6 +122,7 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
   uniqueIds(data.customers, 'customers', errors);
   uniqueIds(data.drinks, 'drinks', errors);
   uniqueIds(data.selfCare, 'self_care', errors);
+  uniqueIds(data.rivals, 'rivals', errors);
 
   const p = data.player;
   if (!homeIds.has(p.initial.home_id)) errors.push(`player.initial.home_id: 無い家 "${p.initial.home_id}"`);
@@ -174,7 +186,45 @@ export function validateGameData(raw: Record<keyof GameData, unknown>): GameData
       if (!hobbyIds.has(hobby)) errors.push(`${at}.hobbies: 無い趣味 "${hobby}"`);
     }
     if (item.cost < 0) errors.push(`${at}.cost: 負`);
+    const has = (key: 'duration_days' | 'rebound' | 'monthly_fee') => item[key] !== undefined;
+    if (item.kind === 'timed') {
+      if (!(item.duration_days !== undefined && item.duration_days >= 1)) errors.push(`${at}: timed は duration_days（1 以上）が要る`);
+      if (item.rebound !== undefined && item.rebound < 0) errors.push(`${at}.rebound: 負`);
+      if (has('monthly_fee')) errors.push(`${at}: timed に monthly_fee は付けない`);
+    } else if (item.kind === 'subscription') {
+      if (!(item.monthly_fee !== undefined && item.monthly_fee > 0)) errors.push(`${at}: subscription は monthly_fee（正）が要る`);
+      if (has('duration_days') || has('rebound')) errors.push(`${at}: subscription に duration_days / rebound は付けない`);
+    } else if (item.kind === 'instant') {
+      if (has('duration_days') || has('rebound') || has('monthly_fee')) errors.push(`${at}: instant に期間・反動・月額は付けない`);
+    } else {
+      errors.push(`${at}.kind: 知らない種類 "${item.kind}"`);
+    }
   });
+
+  const gates = new Set<number>();
+  data.rivals.forEach((r, i) => {
+    const at = `rivals[${i}] (${r.id})`;
+    if (r.gate_stage <= p.initial.stage_level) errors.push(`${at}.gate_stage: 初期ステージ以下`);
+    if (gates.has(r.gate_stage)) errors.push(`${at}.gate_stage: 同じステージに 2 人`);
+    gates.add(r.gate_stage);
+    positive(r.sales_target, `${at}.sales_target`, errors);
+    positive(r.move_speed, `${at}.move_speed`, errors);
+    positive(r.steal_radius, `${at}.steal_radius`, errors);
+  });
+
+  if (data.loginBonus.cycle.length === 0) errors.push('login_bonus.cycle: 空');
+  data.loginBonus.cycle.forEach((r, i) => {
+    if (!['money', 'hp_full', 'mp_full'].includes(r.kind)) errors.push(`login_bonus.cycle[${i}].kind: 知らない種類 "${r.kind}"`);
+    if (r.kind === 'money' && !(r.amount > 0)) errors.push(`login_bonus.cycle[${i}].amount: お金は正の額`);
+  });
+
+  data.enemies.forEach((e, i) => {
+    if (e.tint !== undefined && !/^#[0-9a-fA-F]{6}$/.test(e.tint)) errors.push(`enemies[${i}].tint: "#rrggbb" でない`);
+  });
+
+  const rt = p.realtime;
+  if (rt.hp_per_minute < 0 || rt.mp_per_minute < 0 || rt.drunk_per_minute < 0) errors.push('player.realtime: 負の回復');
+  if (!(rt.max_elapsed_minutes > 0)) errors.push('player.realtime.max_elapsed_minutes: 0 以下');
 
   const c = data.calendar;
   if (!(c.closed_weekday >= 0 && c.closed_weekday <= 6)) errors.push('calendar.closed_weekday: 0〜6 の外');

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { applyShift } from '../../core/career/shift';
 import { byId } from '../../core/data/gameData';
+import { sfx } from '../audio/sfx';
 import { t, yen } from '../i18n';
 import { session } from '../session';
 import { COLOR, CSS, HEIGHT, WIDTH, textStyle, wrappedStyle } from '../theme';
@@ -24,6 +25,8 @@ export class ResultScene extends Phaser.Scene {
 
     this.cameras.main.fadeIn(300);
     this.cameras.main.setBackgroundColor(COLOR.night);
+    this.time.delayedCall(250, () => sfx.play('shop_settle'));
+    if (report.levelsGained > 0) this.time.delayedCall(1100, () => sfx.play('level_up'));
     const titleColor = report.outcome === 'goal' ? CSS.gold : report.outcome === 'late' ? CSS.pinkSoft : CSS.red;
     this.add.text(WIDTH / 2, 120, t(`result.title.${report.outcome}`), textStyle(56, titleColor, { stroke: CSS.dark, strokeThickness: 8 })).setOrigin(0.5);
 
@@ -40,6 +43,14 @@ export class ResultScene extends Phaser.Scene {
     ];
     if (report.levelsGained > 0) rows.push([t('result.level_up'), t('result.level_value', { level: report.levelAfter }), CSS.pink]);
     if (report.outcome === 'late') rows.push([t('result.late_note'), '', CSS.red]);
+    if (report.rival) {
+      const name = t(byId(session.data.rivals, report.rival.id).name_key);
+      rows.push([
+        t('result.rival', { name }),
+        t(report.rival.won ? 'result.rival_won' : 'result.rival_lost', { target: yen(report.rival.target) }),
+        report.rival.won ? CSS.gold : CSS.red,
+      ]);
+    }
 
     rows.forEach(([label, value, color], i) => {
       const y = 260 + i * 72;

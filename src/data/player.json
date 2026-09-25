@@ -36,5 +36,11 @@
   "exp_per_1000_sales": 3,
   "late_sales_multiplier": 0.7,
   "genji_name_max_length": 10,
-  "ad_refills_per_day": 3
+  "ad_refills_per_day": 3,
+  "realtime": {
+    "hp_per_minute": 1,
+    "mp_per_minute": 0.5,
+    "drunk_per_minute": 0.2,
+    "max_elapsed_minutes": 720
+  }
 }

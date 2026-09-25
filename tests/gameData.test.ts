@@ -5,10 +5,12 @@ import drinks from '../src/data/drinks.json';
 import enemies from '../src/data/enemies.json';
 import hobbies from '../src/data/hobbies.json';
 import homes from '../src/data/homes.json';
+import loginBonus from '../src/data/login_bonus.json';
 import ngWords from '../src/data/ng_words.json';
 import player from '../src/data/player.json';
 import rank from '../src/data/rank.json';
 import recruit from '../src/data/recruit.json';
+import rivals from '../src/data/rivals.json';
 import selfCare from '../src/data/self_care.json';
 import service from '../src/data/service.json';
 import street from '../src/data/street.json';
@@ -28,6 +30,8 @@ function rawData() {
     service,
     hobbies: hobbies.hobbies,
     selfCare: selfCare.items,
+    rivals: rivals.rivals,
+    loginBonus,
     homes: homes.homes,
     calendar,
     rank,
@@ -105,6 +109,26 @@ describe('検査が落とすもの', () => {
     const raw = rawData();
     raw.street.goal_appear_seconds = 999;
     expect(errorsOf(raw).length).toBeGreaterThan(0);
+  });
+
+  it('期間つきなのに期間が無い自分磨き', () => {
+    const raw = rawData();
+    const timed = raw.selfCare.find((i: any) => i.kind === 'timed');
+    delete timed.duration_days;
+    expect(errorsOf(raw).some((e) => e.includes('duration_days'))).toBe(true);
+  });
+
+  it('月額なのに月額が無い自分磨き', () => {
+    const raw = rawData();
+    const sub = raw.selfCare.find((i: any) => i.kind === 'subscription');
+    delete sub.monthly_fee;
+    expect(errorsOf(raw).some((e) => e.includes('monthly_fee'))).toBe(true);
+  });
+
+  it('同じステージに 2 人のライバル', () => {
+    const raw = rawData();
+    raw.rivals.push({ ...raw.rivals[0], id: 'twin' });
+    expect(errorsOf(raw).some((e) => e.includes('同じステージに 2 人'))).toBe(true);
   });
 
   it('値段が昇順でないドリンク表', () => {

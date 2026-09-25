@@ -3,3 +3,6 @@ dist/
 .DS_Store
 *.log
 coverage/
+
+# 効果音（Case Portman。public リポジトリに置けないライセンス。tools/import_tokyo_sfx.py で手元に作る）
+public/assets/audio/

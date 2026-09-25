@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 import { nextSeed } from '../../core/career/playerState';
+import { activeRival } from '../../core/career/rival';
 import { spendAdRefill } from '../../core/career/work';
 import { byId } from '../../core/data/gameData';
 import { StreetSim, type ChoiceOption, type CustomerInstance, type RecruitChoice, type StreetEvent } from '../../core/street/streetSim';
 import type { Vec2 } from '../../core/vec';
+import { sfx } from '../audio/sfx';
 import { DEPTH, characterDepth } from '../depth';
 import { t } from '../i18n';
 import { session } from '../session';
@@ -28,6 +30,7 @@ export class StreetScene extends Phaser.Scene {
   private _stick!: VirtualStick;
   private _ground!: Phaser.GameObjects.TileSprite;
   private _player!: Phaser.GameObjects.Sprite;
+  private _rival: Phaser.GameObjects.Sprite | null = null;
   private _shots!: Phaser.GameObjects.Graphics;
   private _markers!: Phaser.GameObjects.Graphics;
   private _arrows!: Phaser.GameObjects.Graphics;
@@ -56,7 +59,10 @@ export class StreetScene extends Phaser.Scene {
     this._goal = null;
     this._enemies.clear();
     this._customers.clear();
+    this._rival = null;
+    const rival = activeRival(p, session.data);
     this._sim = new StreetSim(session.data, {
+      rival,
       stageLevel: p.stageLevel,
       hp: p.hp,
       maxHp: p.maxHp,
@@ -79,7 +85,13 @@ export class StreetScene extends Phaser.Scene {
     this.cameras.main.setRoundPixels(true);
     this._stick = new VirtualStick(this);
     this.drawHud();
-    banner(this, t('street.start', { stage: p.stageLevel }), CSS.pinkSoft);
+    if (rival) {
+      this._rival = this.add.sprite(0, 0, rival.visual_id).setOrigin(0.5, 0.92).setScale(CHARACTER_SCALE);
+      banner(this, t('street.rival_appeared', { name: t(rival.name_key) }), CSS.lavender);
+      sfx.play('boss_arrival');
+    } else {
+      banner(this, t('street.start', { stage: p.stageLevel }), CSS.pinkSoft);
+    }
   }
 
   override update(_time: number, deltaMs: number): void {
@@ -87,6 +99,7 @@ export class StreetScene extends Phaser.Scene {
     sim.update(deltaMs / 1000, { move: this._stick.vector });
     for (const event of sim.drainEvents()) this.onEvent(event);
     this.syncPlayer();
+    this.syncRival();
     this.syncEnemies();
     this.syncCustomers();
     this.drawShotsAndGems();
@@ -159,6 +172,22 @@ export class StreetScene extends Phaser.Scene {
     this._player.setAlpha(body.invincible > 0 && Math.floor(body.invincible * 20) % 2 === 0 ? 0.4 : 1);
   }
 
+  /** ライバルは自機と同じ走りのクリップを持つ */
+  private syncRival(): void {
+    const body = this._sim.rival;
+    const sprite = this._rival;
+    if (!body || !sprite) return;
+    sprite.setPosition(body.pos.x, body.pos.y).setDepth(characterDepth(body.pos.y));
+    let clip = 'idle';
+    if (body.moving) {
+      const f = body.facing;
+      clip = Math.abs(f.x) >= Math.abs(f.y) ? 'run_side' : f.y > 0 ? 'run_front' : 'run_back';
+      if (Math.abs(f.x) > 0.2) sprite.setFlipX(f.x < 0);
+    }
+    const key = animKey(body.visualId, clip);
+    if (sprite.anims.currentAnim?.key !== key) sprite.play(key);
+  }
+
   private syncEnemies(): void {
     const alive = new Set<number>();
     for (const enemy of this._sim.enemies) {
@@ -167,6 +196,12 @@ export class StreetScene extends Phaser.Scene {
       if (!sprite) {
         sprite = this.add.sprite(enemy.pos.x, enemy.pos.y, enemy.visualId).setOrigin(0.5, 0.92).setScale(CHARACTER_SCALE * (enemy.radius / 20));
         sprite.play({ key: animKey(enemy.visualId, 'walk'), startFrame: Phaser.Math.Between(0, 5) });
+        // 色違いの乗算色はスプライトに覚えさせる（命中の白フラッシュの後に戻すため。
+        // 命中と撃破が同じティックだと、シミュレーション側の敵はもう居ないので引けない）
+        const tint = byId(session.data.enemies, enemy.typeId).tint;
+        const color = tint ? Phaser.Display.Color.HexStringToColor(tint).color : null;
+        sprite.setData('tint', color);
+        if (color !== null) sprite.setTint(color);
         this._enemies.set(enemy.uid, sprite);
       }
       sprite.setPosition(enemy.pos.x, enemy.pos.y).setDepth(characterDepth(enemy.pos.y));
@@ -244,6 +279,7 @@ export class StreetScene extends Phaser.Scene {
     const targets: { pos: Vec2; color: number }[] = this._sim.customers.filter((c) => c.state === 'wandering').map((c) => ({ pos: c.pos, color: COLOR.pink }));
     const goal = this._sim.goal;
     if (goal) targets.push({ pos: goal, color: COLOR.gold });
+    if (this._sim.rival) targets.push({ pos: this._sim.rival.pos, color: COLOR.lavender });
     const g = this._arrows;
     g.clear();
     const cx = cam.scrollX + WIDTH / 2;
@@ -292,13 +328,19 @@ export class StreetScene extends Phaser.Scene {
         const sprite = this._enemies.get(event.uid);
         if (sprite) {
           sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-          this.time.delayedCall(60, () => sprite.active && sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
+          this.time.delayedCall(60, () => {
+            if (!sprite.active) return;
+            sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+            const color = sprite.getData('tint') as number | null;
+            if (color !== null) sprite.setTint(color);
+          });
         }
         if (this._damageNumbers < MAX_DAMAGE_NUMBERS) {
           this._damageNumbers++;
           floatText(this, event.pos.x, event.pos.y - 70, String(event.damage), CSS.text, 22);
           this.time.delayedCall(650, () => this._damageNumbers--);
         }
+        sfx.play('hit_penlight');
         break;
       }
       case 'enemy_killed': {
@@ -306,20 +348,37 @@ export class StreetScene extends Phaser.Scene {
         this.tweens.add({ targets: puff, scale: 2, alpha: 0, duration: 250, onComplete: () => puff.destroy() });
         break;
       }
+      case 'gem_collected':
+        sfx.play('pickup_exp');
+        break;
       case 'player_hurt':
+        sfx.play('player_hurt');
         this.cameras.main.shake(120, 0.008);
         this.cameras.main.flash(120, 255, 60, 90, false);
         break;
       case 'street_level_up':
+        sfx.play('level_up');
         banner(this, t('street.level_up', { level: event.level }), CSS.mint, HEIGHT * 0.36);
         break;
       case 'customer_spawned':
+        sfx.play('pickup_item');
         banner(this, t('street.customer_appeared'), CSS.pink);
         break;
       case 'goal_appeared':
+        sfx.play('goal_open');
         this.spawnGoal(event.pos);
         banner(this, t('street.goal_appeared'), CSS.gold, HEIGHT * 0.2);
         break;
+      case 'encounter':
+        sfx.play('talk_open');
+        break;
+      case 'customer_stolen': {
+        sfx.play('recruit_fail');
+        const name = this._sim.rival ? t(byId(session.data.rivals, this._sim.rival.id).name_key) : '';
+        banner(this, t('street.customer_stolen', { name }), CSS.lavender);
+        floatText(this, event.pos.x, event.pos.y - 120, t('street.stolen_mark'), CSS.lavender, 30);
+        break;
+      }
       default:
         break;
     }
@@ -394,6 +453,7 @@ export class StreetScene extends Phaser.Scene {
     const buttons = new Map<RecruitChoice, Button>();
     const choose = (choice: RecruitChoice) => {
       if (!this._sim.resolveEncounter(choice)) return;
+      sfx.play(choice === 'companion' ? 'recruit_join' : choice === 'skip' ? 'ui_cancel' : 'pickup_item');
       if (choice === 'companion') banner(this, t('street.encounter.companion_done'), CSS.pink);
       if (choice === 'exp') banner(this, t('street.encounter.exp_done'), CSS.mint);
       if (choice === 'heal') banner(this, t('street.encounter.heal_done'), CSS.pinkSoft);
@@ -411,6 +471,7 @@ export class StreetScene extends Phaser.Scene {
         sub: '',
         fill: fills[option.choice],
         textColor: option.choice === 'companion' ? CSS.text : CSS.dark,
+        sfx: null,
         onClick: () => choose(option.choice),
       });
       buttons.set(option.choice, button);
@@ -433,6 +494,7 @@ export class StreetScene extends Phaser.Scene {
       fill: COLOR.cyan,
       textColor: CSS.dark,
       fontSize: 24,
+      sfx: 'pickup_item',
       onClick: () => {
         if (!spendAdRefill(p)) return;
         this._sim.refillMp();
@@ -450,6 +512,7 @@ export class StreetScene extends Phaser.Scene {
       label: t('street.choice.skip'),
       fill: COLOR.panelLight,
       fontSize: 26,
+      sfx: null,
       onClick: () => choose('skip'),
     }));
     pinToScreen(root);
@@ -465,6 +528,7 @@ export class StreetScene extends Phaser.Scene {
     this._stick.enabled = false;
     session.lastStreet = outcome;
     session.lastService = null;
+    sfx.play(outcome.kind === 'goal' ? 'run_clear' : outcome.kind === 'late' ? 'run_late' : 'run_defeat');
     const color = outcome.kind === 'goal' ? CSS.gold : outcome.kind === 'late' ? CSS.pinkSoft : CSS.red;
     banner(this, t(`street.outcome.${outcome.kind}`), color, HEIGHT * 0.42);
     this.time.delayedCall(1500, () => {

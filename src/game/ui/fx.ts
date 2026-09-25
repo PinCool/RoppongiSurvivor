@@ -9,13 +9,15 @@ export function banner(scene: Phaser.Scene, text: string, color: string, y = HEI
     .setOrigin(0.5)
     .setScrollFactor(0)
     .setDepth(DEPTH.hud + 10)
-    .setScale(0.4)
     .setAlpha(0);
+  // 長い告知は画面幅に収まるまで縮める
+  const fit = Math.min(1, (WIDTH - 40) / label.width);
+  label.setScale(0.4 * fit);
   scene.tweens.chain({
     targets: label,
     tweens: [
-      { scale: 1.08, alpha: 1, duration: 180, ease: 'Back.Out' },
-      { scale: 1, duration: 120 },
+      { scale: 1.08 * fit, alpha: 1, duration: 180, ease: 'Back.Out' },
+      { scale: fit, duration: 120 },
       { alpha: 0, y: y - 40, delay: 1100, duration: 300, onComplete: () => label.destroy() },
     ],
   });

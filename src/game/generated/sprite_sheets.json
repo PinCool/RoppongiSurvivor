@@ -41,16 +41,6 @@
       }
     }
   },
-  "hood": {
-    "frame_width": 94,
-    "frame_height": 150,
-    "clips": {
-      "walk": {
-        "start": 0,
-        "count": 6
-      }
-    }
-  },
   "bandman": {
     "frame_width": 111,
     "frame_height": 150,
@@ -107,8 +97,8 @@
       }
     }
   },
-  "regent": {
-    "frame_width": 108,
+  "catch": {
+    "frame_width": 120,
     "frame_height": 150,
     "clips": {
       "idle": {
@@ -117,6 +107,28 @@
       },
       "walk": {
         "start": 4,
+        "count": 6
+      }
+    }
+  },
+  "crystal": {
+    "frame_width": 129,
+    "frame_height": 150,
+    "clips": {
+      "idle": {
+        "start": 0,
+        "count": 6
+      },
+      "run_side": {
+        "start": 6,
+        "count": 6
+      },
+      "run_front": {
+        "start": 12,
+        "count": 6
+      },
+      "run_back": {
+        "start": 18,
         "count": 6
       }
     }

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx, type SfxId } from '../audio/sfx';
 import { COLOR, CSS, textStyle } from '../theme';
 
 export interface ButtonOptions {
@@ -10,6 +11,8 @@ export interface ButtonOptions {
   fill?: number;
   textColor?: string;
   fontSize?: number;
+  /** 押したときの音（既定は決定音。null で鳴らさない）。押せない状態で押すとエラー音 */
+  sfx?: SfxId | null;
   onClick: () => void;
 }
 
@@ -46,7 +49,12 @@ export class Button extends Phaser.GameObjects.Container {
       scene.tweens.add({ targets: this, scale: 0.95, duration: 60, yoyo: true });
     });
     this.on('pointerup', () => {
-      if (this._enabled) opts.onClick();
+      if (!this._enabled) {
+        sfx.play('ui_error');
+        return;
+      }
+      if (opts.sfx !== null) sfx.play(opts.sfx ?? 'ui_confirm');
+      opts.onClick();
     });
     this.draw();
     this.layoutText();

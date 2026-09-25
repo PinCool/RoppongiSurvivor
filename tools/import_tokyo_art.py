@@ -24,13 +24,17 @@ CHARACTERS = {
     "player": ("Night", [("idle", "idle_front"), ("run_side", "run_side"), ("run_front", "run_front"), ("run_back", "run_back")]),
     "salaryman": ("Salaryman", [("walk", "walk_side")]),
     "sweats": ("Sweats", [("walk", "walk_side")]),
-    "hood": ("Hood", [("walk", "walk_side")]),
     "bandman": ("Bandman", [("idle", "idle_front"), ("walk", "walk_side")]),
     "host": ("Host", [("idle", "idle_front"), ("walk", "walk_side")]),
     "tora": ("Tora", [("idle", "idle_front"), ("walk", "walk_side")]),
     "punch": ("Punch", [("idle", "idle_front"), ("walk", "walk_side")]),
-    "regent": ("Regent", [("idle", "idle_front"), ("walk", "walk_side")]),
+    "catch": ("Catch", [("idle", "idle_front"), ("walk", "walk_side")]),
+    # ライバル（キャバ嬢）。自機と同じ走りのクリップを持つ
+    "crystal": ("Crystal", [("idle", "idle_front"), ("run_side", "run_side"), ("run_front", "run_front"), ("run_back", "run_back")]),
 }
+
+# TokyoSurvivor で使われなくなった古い絵。取り込まない（2026-09-25 ユーザー指示「昔のアセットが紛れ込んでいるから完全削除」）
+RETIRED = {"Hood", "Regent"}
 
 
 def frames(folder: Path, prefix: str) -> list[Path]:
@@ -96,7 +100,19 @@ def bake_home() -> None:
     print("home: room.jpg, logo.png")
 
 
+def remove_stale_sheets(keep: set[str]) -> None:
+    """表から消したキャラのシートを消す（古い絵が public/ に残らないように）"""
+    for png in (OUT / "sprites").glob("*.png"):
+        if png.stem not in keep:
+            png.unlink()
+            print(f"removed stale sheet: {png.name}")
+
+
 if __name__ == "__main__":
+    retired = RETIRED & {folder for folder, _ in CHARACTERS.values()}
+    if retired:
+        raise SystemExit(f"retired art in CHARACTERS: {sorted(retired)}")
+    remove_stale_sheets(set(CHARACTERS))
     sheets = {name: bake_character(name, folder, clips) for name, (folder, clips) in CHARACTERS.items()}
     generated = Path(__file__).resolve().parent.parent / "src/game/generated"
     generated.mkdir(parents=True, exist_ok=True)

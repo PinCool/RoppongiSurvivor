@@ -7,7 +7,13 @@ import { normalize, type Vec2 } from '../src/core/vec';
  * 同伴が埋まっているか MP が無ければ、HP が減っていれば回復、そうでなければ経験値。
  */
 export function playStreet(data: GameData, stageLevel: number, seed: number, still = false): StreetOutcome {
-  const sim = new StreetSim(data, { stageLevel, hp: 100, maxHp: 100, mp: 100, maxMp: 100, seed });
+  return playStreetSim(data, stageLevel, seed, still).outcome!;
+}
+
+/** ボットで最後まで遊んだシミュレーションを返す（ライバルの横取り数なども見られる） */
+export function playStreetSim(data: GameData, stageLevel: number, seed: number, still = false): StreetSim {
+  const rival = data.rivals.find((r) => r.gate_stage === stageLevel) ?? null;
+  const sim = new StreetSim(data, { stageLevel, hp: 100, maxHp: 100, mp: 100, maxMp: 100, seed, rival });
   let guard = 0;
   while (!sim.outcome && guard++ < 60 * 400) {
     if (sim.pendingEncounter) {
@@ -21,13 +27,16 @@ export function playStreet(data: GameData, stageLevel: number, seed: number, sti
     }
     sim.tick({ move: still ? { x: 0, y: 0 } : steer(sim) });
   }
-  return sim.outcome!;
+  return sim;
 }
 
 function steer(sim: StreetSim): Vec2 {
   const me = sim.player.pos;
   let target: Vec2 | null = null;
-  const wanderer = sim.customers.find((c) => c.state === 'wandering' && c.skipCooldown <= 0);
+  // いちばん近いお客へ（ライバルと取り合いになるので、遠い方から狙わない）
+  const wanderer = sim.customers
+    .filter((c) => c.state === 'wandering' && c.skipCooldown <= 0)
+    .sort((a, b) => Math.hypot(a.pos.x - me.x, a.pos.y - me.y) - Math.hypot(b.pos.x - me.x, b.pos.y - me.y))[0];
   if (wanderer && sim.companions.length < 3) target = wanderer.pos;
   else if (sim.goal) target = sim.goal;
   let dx = 0;

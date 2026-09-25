@@ -66,6 +66,9 @@ await waitScene('Home');
 // 展開を毎回そろえる
 await page.evaluate(() => { window.__rs.session.player.seed = 20260925; });
 await wait(900);
+await shot('02_login_bonus');
+await tap(360, 760); // 受け取る
+await wait(500);
 await shot('02_home');
 
 await tap(360, 1080);
@@ -85,7 +88,7 @@ await shot('04_encounter');
 await tap(360, 1280 / 2 + 40 - 450 + 430);
 await wait(400);
 console.log(`companions after tap: ${await companions()}`);
-if ((await companions()) !== 1) throw new Error('同伴のボタンが効いていない');
+if ((await companions()) !== 1) throw new Error(`同伴のボタンが効いていない\n${errors.join('\n')}`);
 
 await fastForward(30);
 if (await teleport('customer')) {
@@ -134,7 +137,7 @@ await shot('11_home_after');
 await tap(131, 1216);
 await wait(500);
 await shot('12_self_care');
-await tap(570, 326); // 1 行目の「やる」（行の上端 260 + 66）
+await tap(580, 296); // 1 行目の「やる」（行の上端 240 + 56）
 await wait(700);
 await shot('13_self_care_done');
 await tap(360, 1150); // とじる
@@ -146,6 +149,35 @@ await tap(360, 1216); // 寝る
 await waitScene('Home');
 await wait(1200);
 await shot('14_rent');
+await tap(360, 820); // OK
+await wait(500);
+
+// ライバル戦: ステージを関門へ飛ばして出勤
+await page.evaluate(() => {
+  const p = window.__rs.session.player;
+  p.stageLevel = 10;
+  p.hp = p.maxHp;
+  p.mp = p.maxMp;
+  window.__rs.game.scene.getScene('Home').scene.restart();
+});
+await wait(900);
+await shot('15_home_rival');
+await tap(360, 1080);
+await waitScene('Street');
+await wait(1200);
+await shot('16_rival_street');
+for (let i = 0; i < 1200; i++) {
+  const stolen = await page.evaluate(() => {
+    const sim = window.__rs.game.scene.getScene('Street')._sim;
+    if (sim.pendingEncounter) sim.resolveEncounter('skip');
+    sim.player.hp = sim.player.maxHp; // 撮影のため倒れないようにする
+    for (let k = 0; k < 10; k++) sim.tick({ move: { x: 0, y: 0 } });
+    return sim.rival.steals;
+  });
+  if (stolen > 0) break;
+}
+await wait(400);
+await shot('17_rival_stole');
 
 await browser.close();
 if (errors.length) {

@@ -1,0 +1,13 @@
+{
+  "rivals": [
+    {
+      "id": "crystal",
+      "name_key": "rival.crystal",
+      "visual_id": "crystal",
+      "gate_stage": 10,
+      "sales_target": 50000,
+      "move_speed": 150,
+      "steal_radius": 50
+    }
+  ]
+}

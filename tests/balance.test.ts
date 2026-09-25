@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { playStreet } from './bot';
+import { playStreet, playStreetSim } from './bot';
 import { freshData } from './helpers';
 
 /**
@@ -38,5 +38,17 @@ describe('集客パートの難易度', () => {
   it('立ち止まっていると囲まれてやられる（動く意味がある）', () => {
     const outcomes = Array.from({ length: 10 }, (_, i) => playStreet(freshData(), 1, 2000 + i, true));
     expect(outcomes.filter((o) => o.kind === 'down').length).toBeGreaterThanOrEqual(7);
+  });
+});
+
+describe('ライバル戦の難易度', () => {
+  it('クリスタルの関門: 上手く動けば半分以上のお客は守れるが、ときどき横取りされる', () => {
+    const data = freshData();
+    const crystal = data.rivals.find((r) => r.id === 'crystal')!;
+    const runs = Array.from({ length: 20 }, (_, i) => playStreetSim(freshData(), crystal.gate_stage, 3000 + i));
+    const companions = runs.reduce((s, r) => s + r.outcome!.companions.length, 0) / runs.length;
+    const steals = runs.reduce((s, r) => s + r.rival!.steals, 0) / runs.length;
+    expect(companions).toBeGreaterThanOrEqual(1.5); // 3 人中の半分。ボットでいまは 1.7〜1.8
+    expect(steals).toBeGreaterThan(0.2);
   });
 });

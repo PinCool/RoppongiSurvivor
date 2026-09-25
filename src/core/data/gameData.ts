@@ -4,10 +4,12 @@ import drinks from '../../data/drinks.json';
 import enemies from '../../data/enemies.json';
 import hobbies from '../../data/hobbies.json';
 import homes from '../../data/homes.json';
+import loginBonus from '../../data/login_bonus.json';
 import ngWords from '../../data/ng_words.json';
 import player from '../../data/player.json';
 import rank from '../../data/rank.json';
 import recruit from '../../data/recruit.json';
+import rivals from '../../data/rivals.json';
 import selfCare from '../../data/self_care.json';
 import service from '../../data/service.json';
 import street from '../../data/street.json';
@@ -26,6 +28,8 @@ export function loadGameData(): GameData {
     service,
     hobbies: hobbies.hobbies,
     selfCare: selfCare.items,
+    rivals: rivals.rivals,
+    loginBonus,
     homes: homes.homes,
     calendar,
     rank,

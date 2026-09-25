@@ -249,3 +249,41 @@ describe('戦闘', () => {
     }
   });
 });
+
+describe('ライバル（関門のステージ）', () => {
+  it('放っておくと、お客を横取りされる', () => {
+    const data = quietData();
+    const crystal = data.rivals[0]!;
+    const sim = new StreetSim(data, { ...PARAMS, stageLevel: crystal.gate_stage, rival: crystal });
+    expect(sim.rival).not.toBeNull();
+    // プレイヤーはお客から遠い隅で待つ（遭遇しないように）
+    const stolen: number[] = [];
+    for (let i = 0; i < 60 * 130 && !sim.outcome; i++) {
+      sim.player.pos.x = -2000;
+      sim.player.pos.y = -2000;
+      if (sim.pendingEncounter) sim.resolveEncounter('skip');
+      sim.tick(STILL);
+      for (const e of sim.drainEvents()) if (e.type === 'customer_stolen') stolen.push(e.uid);
+    }
+    expect(stolen.length).toBeGreaterThanOrEqual(2);
+    expect(sim.rival!.steals).toBe(stolen.length);
+    for (const uid of stolen) expect(sim.customers.find((c) => c.uid === uid)!.state).toBe('stolen');
+  });
+
+  it('横取りされたお客には声をかけられない', () => {
+    const data = quietData();
+    const crystal = data.rivals[0]!;
+    const sim = new StreetSim(data, { ...PARAMS, stageLevel: crystal.gate_stage, rival: crystal });
+    runUntil(sim, 60.05);
+    const customer = sim.customers[0]!;
+    customer.state = 'stolen';
+    sim.player.pos.x = customer.pos.x;
+    sim.player.pos.y = customer.pos.y;
+    sim.tick(STILL);
+    expect(sim.pendingEncounter).toBeNull();
+  });
+
+  it('関門でないステージにはライバルは出ない', () => {
+    expect(new StreetSim(quietData(), PARAMS).rival).toBeNull();
+  });
+});

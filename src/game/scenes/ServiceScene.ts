@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
+import { effectiveStats } from '../../core/career/stats';
 import { byId } from '../../core/data/gameData';
 import { VIBES, type Vibe } from '../../core/data/types';
 import { ServiceSession, type BonusTag } from '../../core/service/serviceSession';
+import { sfx } from '../audio/sfx';
 import { t, yen } from '../i18n';
 import { session } from '../session';
 import { animKey, hasClip, idleFrame } from '../sprites';
@@ -38,7 +40,8 @@ export class ServiceScene extends Phaser.Scene {
     const p = session.player;
     this._session = new ServiceSession(
       session.data,
-      { mp: street.mp, beauty: p.beauty, intellect: p.intellect, sense: p.sense, hobbies: p.hobbies },
+      // 能力値は期間つき・月額の効き目込み
+      { mp: street.mp, ...effectiveStats(p, session.data), hobbies: p.hobbies },
       street.companions,
       p.seed ^ 0x5bd1e995,
     );
@@ -139,6 +142,7 @@ export class ServiceScene extends Phaser.Scene {
           fill: fills[vibe],
           textColor: vibe === 'wild' ? CSS.text : CSS.dark,
           fontSize: 36,
+          sfx: null,
           onClick: () => this.chooseVibe(vibe),
         }),
       );
@@ -148,6 +152,7 @@ export class ServiceScene extends Phaser.Scene {
   private chooseVibe(vibe: Vibe): void {
     const result = this._session.chooseVibe(vibe);
     this.say(t(result.reactionKey, { name: session.player.genjiName }));
+    sfx.play(result.matched ? 'activity_clear' : 'recruit_fail');
     if (result.matched) this.cameras.main.flash(150, 255, 180, 210, false);
     else this.tweens.add({ targets: this._guestSprite, x: WIDTH / 2 + 10, duration: 50, yoyo: true, repeat: 3 });
     this.showTags(this._session.bonusTags());
@@ -196,6 +201,7 @@ export class ServiceScene extends Phaser.Scene {
         sub: t('service.drink_sub', { price: yen(d.price), mp: d.mp_cost }),
         fill: COLOR.panelLight,
         fontSize: 28,
+        sfx: null,
         onClick: () => this.order(d.id),
       });
       button.setEnabled(option.block === null);
@@ -224,6 +230,7 @@ export class ServiceScene extends Phaser.Scene {
     const result = this._session.order(drinkId);
     const drink = byId(session.data.drinks, drinkId);
     this.say(t(result.reactionKey, { drink: t(drink.name_key), name: session.player.genjiName }));
+    sfx.play(result.guestLeft ? 'recruit_fail' : result.success ? 'shop_request_ok' : 'shop_request_fail');
     if (result.success) {
       floatText(this, WIDTH / 2, 300, `+${yen(result.price)}`, CSS.gold, 44);
       if (result.price >= 30000) {

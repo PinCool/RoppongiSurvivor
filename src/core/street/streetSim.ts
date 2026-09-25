@@ -1,4 +1,4 @@
-import type { CustomerData, EnemyData, GameData, StreetData } from '../data/types';
+import type { CustomerData, EnemyData, GameData, RivalData, StreetData } from '../data/types';
 import { Rng } from '../rng';
 import { circlesOverlap, clamp, clampLength1, distance, distanceSq, normalize, type Vec2 } from '../vec';
 
@@ -8,10 +8,13 @@ import { circlesOverlap, clamp, clampLength1, distance, distanceSq, normalize, t
  * 流れ: 雑魚を自動攻撃で蹴散らして経験値の粒を拾う → 決まった時刻にお客さん候補が現れる →
  * 近づくと一時停止して 3 択（同伴 / 経験値 / 回復）→ ゴール（お店）に着けば出勤成功。
  * 制限時間を過ぎれば遅刻、HP が尽きれば途中帰宅。
+ * 関門のステージではライバル（キャバ嬢）も街に出て、近くのお客を横取りしに走る。
  */
 
 export const FIXED_DT = 1 / 60;
 const MAX_TICKS_PER_UPDATE = 8;
+/** ライバルが最初に立つ、プレイヤーからの距離 */
+const RIVAL_START_DISTANCE = 320;
 
 export interface StreetInput {
   /** スティックの向き。長さ 1 を超える分は切る */
@@ -25,6 +28,18 @@ export interface StreetParams {
   mp: number;
   maxMp: number;
   seed: number;
+  /** 関門のステージならライバル */
+  rival?: RivalData | null;
+}
+
+export interface RivalBody {
+  id: string;
+  visualId: string;
+  pos: Vec2;
+  facing: Vec2;
+  moving: boolean;
+  /** 横取りしたお客の数 */
+  steals: number;
 }
 
 export interface PlayerBody {
@@ -69,7 +84,7 @@ export interface Gem {
   magnet: boolean;
 }
 
-export type CustomerState = 'wandering' | 'recruited' | 'dismissed';
+export type CustomerState = 'wandering' | 'recruited' | 'dismissed' | 'stolen';
 
 export interface CustomerInstance {
   uid: number;
@@ -109,7 +124,8 @@ export type StreetEvent =
   | { type: 'customer_spawned'; uid: number }
   | { type: 'goal_appeared'; pos: Vec2 }
   | { type: 'encounter'; uid: number }
-  | { type: 'recruited'; uid: number; choice: RecruitChoice };
+  | { type: 'recruited'; uid: number; choice: RecruitChoice }
+  | { type: 'customer_stolen'; uid: number; pos: Vec2 };
 
 export type OutcomeKind = 'goal' | 'late' | 'down';
 
@@ -130,12 +146,14 @@ export class StreetSim {
   readonly gems: Gem[] = [];
   readonly customers: CustomerInstance[] = [];
   readonly companions: Companion[] = [];
+  readonly rival: RivalBody | null;
 
   private readonly _cfg: StreetData;
   private readonly _data: GameData;
   private readonly _rng: Rng;
   private readonly _stage: number;
   private readonly _customerPool: CustomerData[];
+  private readonly _rivalData: RivalData | null;
   private _events: StreetEvent[] = [];
   private _time = 0;
   private _accumulator = 0;
@@ -169,6 +187,17 @@ export class StreetSim {
       moving: false,
     };
     this._spawnTimer = this._cfg.spawn.start_interval_seconds;
+    this._rivalData = params.rival ?? null;
+    this.rival = this._rivalData
+      ? {
+          id: this._rivalData.id,
+          visualId: this._rivalData.visual_id,
+          pos: this.pointAround(RIVAL_START_DISTANCE, 80),
+          facing: { x: -1, y: 0 },
+          moving: false,
+          steals: 0,
+        }
+      : null;
   }
 
   get time(): number {
@@ -251,6 +280,7 @@ export class StreetSim {
     this.updateGems(dt);
     this.updateCustomers(dt);
     if (this._pendingEncounter !== null) return;
+    this.moveRival(dt);
 
     if (this._goal && circlesOverlap(this.player.pos, this.player.radius, this._goal, this._cfg.goal_radius)) {
       this.finish('goal');
@@ -547,6 +577,44 @@ export class StreetSim {
         this._pendingEncounter = customer.uid;
         this._events.push({ type: 'encounter', uid: customer.uid });
       }
+    }
+  }
+
+  /**
+   * ライバルはいちばん近い「まだ誰のものでもない」お客へ走り、触れたら横取りする。
+   * 狙うお客がいなければプレイヤーの近くをうろつく（画面に居続けて存在感を出す）。
+   */
+  private moveRival(dt: number): void {
+    const rival = this.rival;
+    const data = this._rivalData;
+    if (!rival || !data) return;
+    let target: CustomerInstance | null = null;
+    let best = Infinity;
+    for (const c of this.customers) {
+      if (c.state !== 'wandering') continue;
+      const d = distanceSq(c.pos, rival.pos);
+      if (d < best) {
+        best = d;
+        target = c;
+      }
+    }
+    const goal = target ? target.pos : this.player.pos;
+    const keepAway = target ? 0 : 180;
+    const dx = goal.x - rival.pos.x;
+    const dy = goal.y - rival.pos.y;
+    const dist = Math.hypot(dx, dy);
+    rival.moving = dist > keepAway + 4;
+    if (rival.moving) {
+      rival.facing = normalize({ x: dx, y: dy });
+      const step = Math.min(data.move_speed * dt, dist - keepAway);
+      rival.pos.x += rival.facing.x * step;
+      rival.pos.y += rival.facing.y * step;
+      this.clampToWorld(rival.pos, 40);
+    }
+    if (target && distance(target.pos, rival.pos) <= data.steal_radius) {
+      target.state = 'stolen';
+      rival.steals++;
+      this._events.push({ type: 'customer_stolen', uid: target.uid, pos: { ...target.pos } });
     }
   }
 

@@ -14,26 +14,30 @@ TypeScript 7 / **Phaser 4** / Vite 8 / Vitest 5。論理解像度 **720x1280（�
 4. **ユーザー向けの文言をソースに直書きしない。** `src/i18n/ja.json` のキーを `t()` で引く
    （`src/game/` に日本語の文字列があるとテストが落ちる。例外は開発者向けの `new Error(...)` と、行末に `// i18n-ignore: 理由` を書いた行だけ）
 5. **作業の最後に `npm run check`（型 + テスト）を通す。** 見た目を触ったら `tools/shot.mjs` で撮って自分の目で確かめる
-6. **ロジックを書いたらテストも書く。** 難易度を変えたら `tests/balance.test.ts` が通るか見る（落ちたら意図した変化か確かめてから閾値を直す）
+6. **音声ファイル（wav / m4a / mp3 / ogg）を commit しない。** 効果音のライセンスが「単体でダウンロードできる形の公開」を禁じていて、
+   リポジトリは public。`tools/import_tokyo_sfx.py` で手元の `public/assets/audio/`（gitignore）に作る（`Docs/Design.md` の「音」）
+7. **ロジックを書いたらテストも書く。** 難易度を変えたら `tests/balance.test.ts` が通るか見る（落ちたら意図した変化か確かめてから閾値を直す）
 
 ## レイヤ構成
 
 ```
 src/
-├─ core/            純粋 TS。ゲームロジック全部（Node の Vitest でそのまま回る）
+├─ core/            純粋 TS。ゲームロジック全部（Node の Vitest でそのまま回る）。時刻・日付は Game が渡す
 │  ├─ data/         JSON の型・形の検査（知らないキー＝綴り間違いも落とす）・読み込み
-│  ├─ career/       主人公の状態・暦・1 日の終わり（回復・家賃）・レベル・自分磨き・ランク・源氏名・出勤の精算
+│  ├─ career/       主人公の状態（セーブ版 2）・暦・1 日の終わり（回復・家賃・月額・期間切れ）・レベル・自分磨き・能力値（stats）・
+│  │                ランク・源氏名・出勤の精算・ライバル・実時間回復・ログインボーナス
 │  ├─ street/       集客パート（ヴァンサバ風）。固定タイムステップ 1/60
 │  └─ service/      接客パート（ノリの 3 択 → ドリンクのおねだり）
 ├─ game/            Phaser。core を見て描くだけ
 │  ├─ scenes/       Boot → Name → Home ⇄ Street → Service → Result → Home（GameOver）
 │  ├─ ui/           Button / Gauge / VirtualStick / fx（告知・モーダル・遷移）
+│  ├─ audio/        効果音（sfx.play('id')）。間引きの決まりは voicePolicy.ts
 │  └─ generated/    tools/ が書き出す生成物（手で書かない）
 ├─ data/            バランス数値の JSON（AI が編集してよい）
 └─ i18n/ja.json     文言
 public/assets/      絵（tools/import_tokyo_art.py が TokyoSurvivor から焼いたもの）
 tests/              Vitest（core のテスト・規約の見張り・難易度のボット）
-tools/              import_tokyo_art.py（絵の取り込み）/ shot.mjs（通しの撮影）
+tools/              import_tokyo_art.py（絵）/ import_tokyo_sfx.py（効果音。出力は gitignore）/ shot.mjs（通しの撮影）
 ```
 
 ## 新しいデータ種別を足すとき
@@ -65,6 +69,8 @@ npm run build                         # dist/ に静的ファイル（LINE ミ�
   カメラが動く画面（集客）でモーダルのボタンが押せなかった → 中身を足し終えてから `pinToScreen(root)`（`ui/fx.ts`）
 - **白フラッシュは `setTint(0xffffff).setTintMode(Phaser.TintModes.FILL)`**（v3 の `setTintFill` は廃止）。戻すときは
   `clearTint().setTintMode(MULTIPLY)` —— モードを戻さないと白で塗られたままになる
+- **命中と撃破が同じティックに来る。** 命中の演出でシミュレーション側の敵を引くと、もう居なくて例外 → 毎フレームの更新が止まり
+  タイマーが凍った（2026-09-25）。描画に要る値はスプライトを作るときに `setData` で覚えさせる
 - **`wordWrap` は空白で切るので日本語が折り返されない** → `wrappedStyle()`（`theme.ts`。1 文字ずつ測る・行頭禁則あり）
 - **遷移の連打で `scene.start` が二重に積まれ、リザルトの精算が 2 回走った** → `fadeTo` は暗転中の 2 度目を無視する
 - **キャラの depth は足元の y をそのまま使うので、ワールドの y は負にもなる。** 地面を -10 にしていて、スタート地点より

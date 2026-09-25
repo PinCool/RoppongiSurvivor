@@ -38,6 +38,8 @@ export interface PlayerData {
   late_sales_multiplier: number;
   genji_name_max_length: number;
   ad_refills_per_day: number;
+  /** 実時間での回復（アプリを閉じていても進む）。elapsed は max_elapsed_minutes で頭打ち */
+  realtime: { hp_per_minute: number; mp_per_minute: number; drunk_per_minute: number; max_elapsed_minutes: number };
 }
 
 export interface StreetData {
@@ -96,6 +98,8 @@ export interface EnemyData {
   exp: number;
   from_seconds: number;
   weight: number;
+  /** 同じ絵の色違いにするときの乗算色（"#rrggbb"） */
+  tint?: string;
 }
 
 export interface CustomerData {
@@ -146,14 +150,45 @@ export interface HobbyData {
   name_key: string;
 }
 
+/**
+ * 自分磨きの種類
+ * - instant: 一度やれば能力がずっと上がる（勉強・服）
+ * - timed: duration_days の間だけ効く。切れると rebound の分、元より下がる（エステ・整形）。切れる前にやり直せば延長
+ * - subscription: 月額契約。契約中は効き続け、月末に monthly_fee を家賃と一緒に払う（ジム）
+ */
+export type SelfCareKind = 'instant' | 'timed' | 'subscription';
+
 export interface SelfCareData {
   id: string;
   name_key: string;
   category: StatId;
+  kind: SelfCareKind;
   cost: number;
   gains: Partial<Record<StatId, number>>;
   hobbies: Record<string, number>;
   min_level: number;
+  duration_days?: number;
+  rebound?: number;
+  monthly_fee?: number;
+}
+
+/** ライバルのキャバ嬢。gate_stage のステージで、その日の売上が sales_target を越えないと先へ進めない */
+export interface RivalData {
+  id: string;
+  name_key: string;
+  visual_id: string;
+  gate_stage: number;
+  sales_target: number;
+  /** 集客でお客を横取りしに行く速さと、横取りできる距離 */
+  move_speed: number;
+  steal_radius: number;
+}
+
+export type LoginRewardKind = 'money' | 'hp_full' | 'mp_full';
+
+export interface LoginBonusData {
+  /** 連続ログインの日数で回る報酬（最後まで行ったら先頭へ） */
+  cycle: { kind: LoginRewardKind; amount: number }[];
 }
 
 export interface HomeData {
@@ -195,6 +230,8 @@ export interface GameData {
   service: ServiceData;
   hobbies: HobbyData[];
   selfCare: SelfCareData[];
+  rivals: RivalData[];
+  loginBonus: LoginBonusData;
   homes: HomeData[];
   calendar: CalendarData;
   rank: RankData;

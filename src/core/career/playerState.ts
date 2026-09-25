@@ -1,6 +1,13 @@
 import type { GameData, StatId } from '../data/types';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
+
+/** 期間つきの自分磨き（エステ・整形）の効き目。効果の中身は self_care.json から引く */
+export interface ActiveEffect {
+  itemId: string;
+  /** この通算日の朝に切れる */
+  expiresDay: number;
+}
 
 /** セーブされる主人公の状態。すべて JSON にそのまま書ける値だけで持つ */
 export interface PlayerState {
@@ -37,6 +44,17 @@ export interface PlayerState {
   /** 乱数の種。出勤のたびに進める */
   seed: number;
   gameOver: boolean;
+  /** 期間つきの効き目（エステ・整形） */
+  effects: ActiveEffect[];
+  /** 契約中の月額（ジム）の self_care id */
+  subscriptions: string[];
+  /** 倒したライバルの id */
+  defeatedRivals: string[];
+  /** 実時間の回復を最後に進めた時刻（ms）。0 はまだ */
+  lastRealtimeMs: number;
+  /** ログインボーナスを最後に受け取った日（"YYYY-MM-DD"、端末の暦）。空はまだ */
+  lastLoginDate: string;
+  loginStreak: number;
 }
 
 export function createPlayer(data: GameData, genjiName: string, seed: number): PlayerState {
@@ -66,6 +84,12 @@ export function createPlayer(data: GameData, genjiName: string, seed: number): P
     totalSales: 0,
     seed: seed >>> 0,
     gameOver: false,
+    effects: [],
+    subscriptions: [],
+    defeatedRivals: [],
+    lastRealtimeMs: 0,
+    lastLoginDate: '',
+    loginStreak: 0,
   };
 }
 
@@ -77,10 +101,25 @@ export function hobbyLevel(state: PlayerState, hobbyId: string): number {
   return state.hobbies[hobbyId] ?? 0;
 }
 
-/** 読み込んだセーブが今の形か確かめる。壊れていれば null（呼び側で新規作成へ） */
+/** 版 1（v0.1）のセーブに、版 2 で増えた項目を足す */
+function migrateV1(v1: Partial<PlayerState>): Partial<PlayerState> {
+  return {
+    ...v1,
+    version: 2,
+    effects: [],
+    subscriptions: [],
+    defeatedRivals: [],
+    lastRealtimeMs: 0,
+    lastLoginDate: '',
+    loginStreak: 0,
+  };
+}
+
+/** 読み込んだセーブを今の形にする。壊れている・知らない版なら null（呼び側で新規作成へ） */
 export function deserializePlayer(json: string): PlayerState | null {
   try {
-    const parsed = JSON.parse(json) as Partial<PlayerState>;
+    let parsed = JSON.parse(json) as Partial<PlayerState>;
+    if (parsed.version === 1) parsed = migrateV1(parsed);
     if (parsed.version !== SAVE_VERSION) return null;
     if (typeof parsed.genjiName !== 'string' || typeof parsed.level !== 'number') return null;
     return parsed as PlayerState;

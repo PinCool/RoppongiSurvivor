@@ -1,0 +1,32 @@
+{
+  "cycle": [
+    {
+      "kind": "money",
+      "amount": 5000
+    },
+    {
+      "kind": "mp_full",
+      "amount": 0
+    },
+    {
+      "kind": "money",
+      "amount": 10000
+    },
+    {
+      "kind": "hp_full",
+      "amount": 0
+    },
+    {
+      "kind": "money",
+      "amount": 15000
+    },
+    {
+      "kind": "mp_full",
+      "amount": 0
+    },
+    {
+      "kind": "money",
+      "amount": 30000
+    }
+  ]
+}

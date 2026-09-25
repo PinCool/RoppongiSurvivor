@@ -28,7 +28,7 @@
       "companion_mp_cost": 22
     },
     {
-      "id": "artist", "name_key": "customer.artist", "visual_id": "regent", "rank": "B",
+      "id": "artist", "name_key": "customer.artist", "visual_id": "catch", "rank": "B",
       "min_stage": 3, "weight": 2,
       "wallet_min": 20000, "wallet_max": 70000,
       "preference": "sense", "preference_min": 18,

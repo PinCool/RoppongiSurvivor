@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { sfx } from '../audio/sfx';
 import { session } from '../session';
 import { preloadSprites, registerAnimations } from '../sprites';
 import { loadSave } from '../storage';
@@ -17,10 +18,12 @@ export class BootScene extends Phaser.Scene {
     this.load.image('room', 'assets/home/room.jpg');
     this.load.image('logo', 'assets/home/logo.png');
     preloadSprites(this);
+    sfx.preload(this);
   }
 
   create(): void {
     registerAnimations(this);
+    sfx.init(this.game);
     const saved = loadSave();
     if (saved && !saved.gameOver) {
       session.setPlayer(saved);

@@ -36,6 +36,7 @@ export const CSS = {
   cyan: '#5ee3ff',
   mint: '#7cf0c0',
   red: '#ff7a8a',
+  lavender: '#c9b8ff',
   dark: '#1b1433',
 } as const;
 
